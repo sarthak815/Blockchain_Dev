@@ -1,0 +1,1 @@
+def bin_serialized(bin_string,n):
