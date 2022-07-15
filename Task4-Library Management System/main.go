@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
 
 // The goal of this assignment is to implement a library management system which maintains an inventory of
 // physical and digital books owned by a library as well as all members of the library.
@@ -39,37 +43,33 @@ const (
 	Comic
 )
 
-type PhysicalBook struct {
-	B_type   string
-	B_Name   string
-	B_Author string
-	B_Borrow bool
-}
-type DigitalBook struct {
-	B_type   string
+type Books struct {
+	B_type   BookType
 	B_Name   string
 	B_Author string
 	Capacity int
 	Borrowed int
 }
+
 type Book interface {
-	Btype() string
+	Booktype() string
 	Name() string
 	Author() string
 	Borrow() bool
 }
 
-func createPhybook(name, author string) PhysicalBook {
-	var phybook PhysicalBook
-	phybook.B_type = "Hardback"
+func createPhybook(btype BookType, name, author string) Books {
+	var phybook Books
+	phybook.B_type = btype
 	phybook.B_Name = name
 	phybook.B_Author = author
-	phybook.B_Borrow = true
+	phybook.Capacity = 1
+	phybook.Borrowed = 0
 	return phybook
 }
-func createDigbook(name, author string, capacity int) DigitalBook {
-	var digBook DigitalBook
-	digBook.B_type = "E-Book"
+func createDigbook(btype BookType, name, author string, capacity int) Books {
+	var digBook Books
+	digBook.B_type = btype
 	digBook.B_Name = name
 	digBook.B_Author = author
 	digBook.Capacity = capacity
@@ -77,28 +77,16 @@ func createDigbook(name, author string, capacity int) DigitalBook {
 	return digBook
 }
 
-func (b PhysicalBook) Btype() string {
-	return b.B_type
+func (b Books) Booktype() string {
+	return [...]string{"eBook", "Audiobook", "Hardback", "Paperback", "Encyclopedia", "Magazine", "Comic"}[b.B_type]
 }
-func (b PhysicalBook) Name() string {
+func (b Books) Name() string {
 	return b.B_Name
 }
-func (b PhysicalBook) Author() string {
+func (b Books) Author() string {
 	return b.B_Author
 }
-func (b PhysicalBook) Borrow() bool {
-	return b.B_Borrow
-}
-func (b DigitalBook) Btype() string {
-	return b.B_type
-}
-func (b DigitalBook) Name() string {
-	return b.B_Name
-}
-func (b DigitalBook) Author() string {
-	return b.B_Author
-}
-func (b DigitalBook) Borrow() bool {
+func (b *Books) Borrow() bool {
 	borrowed := true
 	if b.Capacity <= b.Borrowed {
 		borrowed = false
@@ -109,10 +97,9 @@ func (b DigitalBook) Borrow() bool {
 }
 
 type Member struct {
-	Name        string
-	Age         int
-	DigBorrowed []DigitalBook
-	PhyBorrowed []PhysicalBook
+	Name          string
+	Age           int
+	BooksBorrowed []Books
 }
 
 func createMember(name string, age int) Member {
@@ -123,52 +110,61 @@ func createMember(name string, age int) Member {
 }
 
 type Library struct {
-	PhyBooks []PhysicalBook
-	DigBooks []DigitalBook
-	Members  []Member
+	BooksBorrowed []Books
+	Members       []Member
 }
 
 func main() {
 	var lib Library
+	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		fmt.Println("Enter 1.Enter Physical Book in Library\n2. Enter Digital Book in Library\n3.Enter Member Details\n4.Borrow a book\n5.Exit")
+		fmt.Println("Enter 1.Enter Book in LibraryDB\n2.Enter Member Details\n3.Borrow a book\n4.Exit")
 		var n int
 		fmt.Scanln(&n)
 		if n == 1 {
-			var physicalBook PhysicalBook
+			var bookS Books
+			//var typeBook string
+			var btype BookType
+			fmt.Println("Enter Book Type \n1.Ebook\n2. AudioBook\n3. HardBack\n4. PaperBack\n5. Encyclopedia\n6. Magazine\n7. Comic: ")
+			fmt.Scanln(&btype)
+			btype--
 			fmt.Println("Enter Name of book: ")
-			var name string
-			fmt.Scanln(&name)
+			scanner.Scan()
+			name := scanner.Text()
 			fmt.Println("Enter Author of book: ")
-			var author string
-			fmt.Scanln(&author)
-			fmt.Println("Enter  of book: ")
-			physicalBook = createPhybook(name, author)
-			fmt.Println(physicalBook)
-			lib.PhyBooks = append(lib.PhyBooks, physicalBook)
+			scanner.Scan()
+			author := scanner.Text()
+
+			if btype <= 1 {
+				var capac int
+				fmt.Println("Enter borrowing limit: ")
+				fmt.Scanln(&capac)
+				bookS = createDigbook(btype, name, author, capac)
+				fmt.Println(bookS)
+				lib.BooksBorrowed = append(lib.BooksBorrowed, bookS)
+
+			}
+			if btype > 1 && btype <= 3 {
+				bookS = createPhybook(btype, name, author)
+				fmt.Println(bookS)
+
+			}
+			if btype > 3 {
+				var capac int
+				fmt.Println("Enter borrowing limit for digital: ")
+				fmt.Scanln(&capac)
+				bookS = createDigbook(btype, name+"Digital", author, capac)
+				lib.BooksBorrowed = append(lib.BooksBorrowed, bookS)
+				bookS = createPhybook(btype, name+"Physical", author)
+				lib.BooksBorrowed = append(lib.BooksBorrowed, bookS)
+			}
 			fmt.Println(lib)
 		}
 		if n == 2 {
-			var digBook DigitalBook
-			fmt.Println("Enter Name of book: ")
-			var name string
-			fmt.Scanln(&name)
-			fmt.Println("Enter Author of book: ")
-			var author string
-			fmt.Scanln(&author)
-			var cap int
-			fmt.Println("Enter borrowing limit: ")
-			fmt.Scanln(&cap)
-			digBook = createDigbook(name, author, cap)
-			fmt.Println(digBook)
-			lib.DigBooks = append(lib.DigBooks, digBook)
-			fmt.Println(lib)
-		}
-		if n == 3 {
 			var member Member
 			fmt.Println("Enter name:")
-			var name string
-			fmt.Scanln(&name)
+			scanner.Scan()
+			name := scanner.Text()
 			var age int
 			fmt.Scanln(&age)
 			member = createMember(name, age)
@@ -176,29 +172,99 @@ func main() {
 			fmt.Println(lib)
 
 		}
-		if n == 4 {
-			var name string
+		if n == 3 {
+			var vermember *Member
 			fmt.Println("Enter your name: ")
-			fmt.Scanln(&name)
+			scanner.Scan()
+			name := scanner.Text()
 			b := false
 			for i := range lib.Members {
 				if lib.Members[i].Name == name {
+					vermember = &lib.Members[i]
 					b = true
 					break
 				}
 			}
 			if b {
-				//fmt.Println("Identity verified")
-				//var bname string
-				//fmt.Println("Enter Book name: ")
-				//fmt.Scanln(&bname)
-				//bfound = false
-
+				fmt.Println("Identity verified")
+				var btype BookType
+				fmt.Println("Enter BookType: \n1.Ebook\n2. AudioBook\n3. HardBack\n4. PaperBack\n5. Encyclopedia\n6. Magazine\n7. Comic: ")
+				fmt.Scanln(&btype)
+				if btype > 4 {
+					fmt.Println("Enter Book name: ")
+					scanner.Scan()
+					bname := scanner.Text()
+					var digPhy int
+					fmt.Println("Enter Copy Type:\n1.Digital\n2.Physical")
+					fmt.Scanln(&digPhy)
+					if digPhy == 1 {
+						bname += "Digital"
+					}
+					if digPhy > 1 || digPhy < 1 {
+						bname += "Physical"
+					}
+					bfound := false
+					var bookFound *Books
+					for i := range lib.BooksBorrowed {
+						if lib.BooksBorrowed[i].B_Name == bname {
+							bookFound = &lib.BooksBorrowed[i]
+							bfound = true
+							break
+						}
+					}
+					if bfound {
+						if !bookFound.Borrow() {
+							fmt.Println("Book Unavailable")
+							continue
+						}
+						fmt.Println(*bookFound)
+						fmt.Println("Details of the book: ")
+						fmt.Println("Book Type: " + bookFound.Booktype())
+						fmt.Println("Book Name: " + bookFound.Name())
+						fmt.Println("Book Author: " + bookFound.Author())
+						vermember.BooksBorrowed = append(vermember.BooksBorrowed, *bookFound)
+						fmt.Println("Book Issued")
+						fmt.Println(lib)
+					}
+					if !bfound {
+						fmt.Println("Book Not found!!")
+					}
+				} else {
+					fmt.Println("Enter Book name: ")
+					scanner.Scan()
+					bname := scanner.Text()
+					bfound := false
+					var bookFound *Books
+					for i := range lib.BooksBorrowed {
+						if lib.BooksBorrowed[i].B_Name == bname {
+							bookFound = &lib.BooksBorrowed[i]
+							bfound = true
+							break
+						}
+					}
+					if bfound {
+						if !bookFound.Borrow() {
+							fmt.Println("Book Unavailable")
+							continue
+						}
+						fmt.Println(*bookFound)
+						fmt.Println("Details of the book: ")
+						fmt.Println("Book Type: " + bookFound.Booktype())
+						fmt.Println("Book Name: " + bookFound.Name())
+						fmt.Println("Book Author: " + bookFound.Author())
+						vermember.BooksBorrowed = append(vermember.BooksBorrowed, *bookFound)
+						fmt.Println("Book Issued")
+						fmt.Println(lib)
+					}
+					if !bfound {
+						fmt.Println("Book Not found!!")
+					}
+				}
 			} else {
 				fmt.Println("Details not found!! Please Register yourself!")
 			}
 		}
-		if n == 5 {
+		if n == 4 {
 			break
 		}
 
