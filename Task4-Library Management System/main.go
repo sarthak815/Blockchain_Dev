@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 // The goal of this assignment is to implement a library management system which maintains an inventory of
 // physical and digital books owned by a library as well as all members of the library.
 // • Only a registered member of the library can borrow books from the library and can only borrow up
@@ -25,6 +27,18 @@ package main
 // members to the userbase. A member must have the ability to borrow a book from a Library and
 // return it
 // 5. You have freedom over the rest of the technical implementation details
+type BookType int
+
+const (
+	eBook BookType = iota
+	Audiobook
+	Hardback
+	Paperback
+	Encyclopedia
+	Magazine
+	Comic
+)
+
 type PhysicalBook struct {
 	B_type   string
 	B_Name   string
@@ -37,7 +51,6 @@ type DigitalBook struct {
 	B_Author string
 	Capacity int
 	Borrowed int
-	B_Borrow bool
 }
 type Book interface {
 	Btype() string
@@ -45,6 +58,25 @@ type Book interface {
 	Author() string
 	Borrow() bool
 }
+
+func createPhybook(name, author string) PhysicalBook {
+	var phybook PhysicalBook
+	phybook.B_type = "Hardback"
+	phybook.B_Name = name
+	phybook.B_Author = author
+	phybook.B_Borrow = true
+	return phybook
+}
+func createDigbook(name, author string, capacity int) DigitalBook {
+	var digBook DigitalBook
+	digBook.B_type = "E-Book"
+	digBook.B_Name = name
+	digBook.B_Author = author
+	digBook.Capacity = capacity
+	digBook.Borrowed = 0
+	return digBook
+}
+
 func (b PhysicalBook) Btype() string {
 	return b.B_type
 }
@@ -76,21 +108,100 @@ func (b DigitalBook) Borrow() bool {
 	return borrowed
 }
 
-type Member struct{
-	Name string
-	Age int
-	Dig_borrowed DigitalBook[]
-	Phy_borrowed PhysicalBook[]
-	
+type Member struct {
+	Name        string
+	Age         int
+	DigBorrowed []DigitalBook
+	PhyBorrowed []PhysicalBook
 }
 
-type Library struct{
-	Phy_Books PhysicalBook[]
-	Dig_Books DigitalBook[]
+func createMember(name string, age int) Member {
+	var member Member
+	member.Name = name
+	member.Age = age
+	return member
+}
 
-
+type Library struct {
+	PhyBooks []PhysicalBook
+	DigBooks []DigitalBook
+	Members  []Member
 }
 
 func main() {
+	var lib Library
+	for {
+		fmt.Println("Enter 1.Enter Physical Book in Library\n2. Enter Digital Book in Library\n3.Enter Member Details\n4.Borrow a book\n5.Exit")
+		var n int
+		fmt.Scanln(&n)
+		if n == 1 {
+			var physicalBook PhysicalBook
+			fmt.Println("Enter Name of book: ")
+			var name string
+			fmt.Scanln(&name)
+			fmt.Println("Enter Author of book: ")
+			var author string
+			fmt.Scanln(&author)
+			fmt.Println("Enter  of book: ")
+			physicalBook = createPhybook(name, author)
+			fmt.Println(physicalBook)
+			lib.PhyBooks = append(lib.PhyBooks, physicalBook)
+			fmt.Println(lib)
+		}
+		if n == 2 {
+			var digBook DigitalBook
+			fmt.Println("Enter Name of book: ")
+			var name string
+			fmt.Scanln(&name)
+			fmt.Println("Enter Author of book: ")
+			var author string
+			fmt.Scanln(&author)
+			var cap int
+			fmt.Println("Enter borrowing limit: ")
+			fmt.Scanln(&cap)
+			digBook = createDigbook(name, author, cap)
+			fmt.Println(digBook)
+			lib.DigBooks = append(lib.DigBooks, digBook)
+			fmt.Println(lib)
+		}
+		if n == 3 {
+			var member Member
+			fmt.Println("Enter name:")
+			var name string
+			fmt.Scanln(&name)
+			var age int
+			fmt.Scanln(&age)
+			member = createMember(name, age)
+			lib.Members = append(lib.Members, member)
+			fmt.Println(lib)
+
+		}
+		if n == 4 {
+			var name string
+			fmt.Println("Enter your name: ")
+			fmt.Scanln(&name)
+			b := false
+			for i := range lib.Members {
+				if lib.Members[i].Name == name {
+					b = true
+					break
+				}
+			}
+			if b {
+				//fmt.Println("Identity verified")
+				//var bname string
+				//fmt.Println("Enter Book name: ")
+				//fmt.Scanln(&bname)
+				//bfound = false
+
+			} else {
+				fmt.Println("Details not found!! Please Register yourself!")
+			}
+		}
+		if n == 5 {
+			break
+		}
+
+	}
 
 }
