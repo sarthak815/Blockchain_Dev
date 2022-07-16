@@ -1,21 +1,58 @@
+//Insert 5 books - Hunger Games as comic(saved as 2 unique digital and physical) , Anna Karenina as paperback, To Kill a Mockingbird as eBook,
+//Where the Sidewalk Ends as Audiobook,Forbes as Magazine(saved as 2 unique digital and physical)
 1
 1
 7
 Hunger Games
 Suzanne Collins
 5
+1
+1
+4
+Anna Karenina
+Leo Tolsoy
+1
+1
+1
+To Kill a Mockingbird
+Harper Lee
+3
+1
+1
+2
+Where the Sidewalk Ends
+Shel Silverstein
+7
+1
+1
+6
+Forbes
+Forbes Organisation
+100
+//Inserting 3 users
 2
 1
 Sam
 15
 2
+1
+Tom
+20
+2
+1
+Tim
+28
+//borrowing hunger games
+2
 2
 Sam
 7
 Hunger Games
 1
+//returning hunger games
 2
 3
 Sam
 7
 Hunger Games
+1
