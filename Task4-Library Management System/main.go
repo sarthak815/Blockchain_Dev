@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	"bufio" // To read lines with whitespace
 	"fmt"
 	"os"
 )
@@ -34,15 +34,16 @@ import (
 type BookType int
 
 const (
-	eBook BookType = iota
-	Audiobook
-	Hardback
-	Paperback
-	Encyclopedia
-	Magazine
-	Comic
+	eBook        BookType = iota //digital
+	Audiobook                    //digital
+	Hardback                     //physical
+	Paperback                    //physical
+	Encyclopedia                 //both
+	Magazine                     //both
+	Comic                        //both
 )
 
+//Book struct to hold digital and physical books
 type Books struct {
 	B_type   BookType
 	B_Name   string
@@ -51,40 +52,40 @@ type Books struct {
 	Borrowed int
 }
 
+//book interface with all functions
 type Book interface {
 	Booktype() string
 	Name() string
 	Author() string
-	Borrow() bool
-	Return()
+	Borrow() bool //checks if available to borrow
+	Return()      //returns a particular book
 }
 
+//Book constructor to create a book object for digital and physical
 func (book *Books) Init(btype BookType, name, author string, capacity int) {
 	book.B_type = btype
 	book.B_Name = name
 	book.B_Author = author
 	book.Capacity = capacity
-	book.Borrowed = 0
+	book.Borrowed = 0 //Initially always available to borrow
 }
 
-//func (digBook Books) Init(btype BookType, name, author string, capacity int) {
-//	digBook.B_type = btype
-//	digBook.B_Name = name
-//	digBook.B_Author = author
-//	digBook.Capacity = capacity
-//	digBook.Borrowed = 0
-//
-//}
-
+//Booktype() returns the string value of book type
 func (b Books) Booktype() string {
 	return [...]string{"eBook", "Audiobook", "Hardback", "Paperback", "Encyclopedia", "Magazine", "Comic"}[b.B_type]
 }
+
+//Name() returns book name
 func (b Books) Name() string {
 	return b.B_Name
 }
+
+//Author() returns author name
 func (b Books) Author() string {
 	return b.B_Author
 }
+
+//Borrow() returns bool value indicating whether book is available to borrow
 func (b *Books) Borrow() bool {
 	borrowed := true
 	if b.Capacity <= b.Borrowed {
@@ -94,14 +95,33 @@ func (b *Books) Borrow() bool {
 	}
 	return borrowed
 }
+
+//Return() Returns a book object by decrementing the borrowed value from library struct
 func (b *Books) Return() {
 	b.Borrowed--
 }
+
+func removeBookMember(slice []Books, s int) []Books {
+	return append(slice[:s], slice[s+1:]...)
+}
+
+func bookIndex(slice []Books, book Books) int {
+	idx := -1
+	for i := range slice {
+		if slice[i].B_Name == book.B_Name {
+			idx = i
+			break
+		}
+	}
+	return idx
+}
+
+//Checks if the user wishing to borrow or return is registered
 func checkUserValidity(name string, lib Library) (bool, *Member) {
-	b := false
-	var member *Member
+	b := false         //Denotes user validity
+	var member *Member //Used to return member object of user that wishes to borrow or return
 	for i := range lib.Members {
-		if lib.Members[i].Name == name {
+		if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
 			member = &lib.Members[i]
 			b = true
 			break
@@ -109,9 +129,11 @@ func checkUserValidity(name string, lib Library) (bool, *Member) {
 	}
 	return b, member
 }
+
+//Checks if book is present in the library
 func checkBookValidity(bname string, lib Library) (bool, *Books) {
-	bfound := false
-	var bookFound *Books
+	bfound := false      //Denotes book validity
+	var bookFound *Books //Used to return book object that user wishes to borrow or return
 	for i := range lib.BooksBorrowed {
 		if lib.BooksBorrowed[i].B_Name == bname {
 			bookFound = &lib.BooksBorrowed[i]
@@ -121,6 +143,8 @@ func checkBookValidity(bname string, lib Library) (bool, *Books) {
 	}
 	return bfound, bookFound
 }
+
+//Prints details of the book
 func printBookDetails(bookFound *Books) {
 	fmt.Println("Details of the book: ")
 	fmt.Println("Book Type: " + bookFound.Booktype())
@@ -130,19 +154,21 @@ func printBookDetails(bookFound *Books) {
 
 }
 
+//Member Structure
 type Member struct {
 	Name          string
 	Age           int
 	BooksBorrowed []Books
 }
 
-func createMember(name string, age int) Member {
-	var member Member
+//Constructor initialising member struct
+func (member *Member) Init(name string, age int) {
 	member.Name = name
 	member.Age = age
-	return member
+
 }
 
+//Library strcuture
 type Library struct {
 	BooksBorrowed []Books
 	Members       []Member
@@ -160,7 +186,6 @@ func main() {
 			var n int
 			fmt.Scanln(&n)
 			if n == 1 {
-
 				bookS := new(Books)
 				//var typeBook string
 				var btype BookType
@@ -210,25 +235,25 @@ func main() {
 			var n int
 			fmt.Scanln(&n)
 			if n == 1 {
-				var member Member
+				member := new(Member)
 				fmt.Println("Enter name:")
 				scanner.Scan()
 				name := scanner.Text()
 				var age int
 				fmt.Println("Enter age:")
 				fmt.Scanln(&age)
-				member = createMember(name, age)
-				lib.Members = append(lib.Members, member)
+				member.Init(name, age)
+				lib.Members = append(lib.Members, *member)
 				fmt.Println(lib)
 
 			}
 			if n == 2 {
-				var vermember *Member
+				var verifiedMember *Member
 				var b bool
 				fmt.Println("Enter your name: ")
 				scanner.Scan()
 				name := scanner.Text()
-				b, vermember = checkUserValidity(name, lib)
+				b, verifiedMember = checkUserValidity(name, lib)
 				if b {
 					fmt.Println("Identity verified")
 					var btype BookType
@@ -258,7 +283,7 @@ func main() {
 							continue
 						}
 						fmt.Println(*bookFound)
-						vermember.BooksBorrowed = append(vermember.BooksBorrowed, *bookFound)
+						verifiedMember.BooksBorrowed = append(verifiedMember.BooksBorrowed, *bookFound)
 						printBookDetails(bookFound)
 						fmt.Println(lib)
 					}
@@ -271,11 +296,11 @@ func main() {
 				}
 			}
 			if n == 3 {
-				var b bool
+
 				fmt.Println("Enter your name: ")
 				scanner.Scan()
 				name := scanner.Text()
-				b, _ = checkUserValidity(name, lib)
+				b, member := checkUserValidity(name, lib)
 				if b {
 					fmt.Println("Identity verified")
 					var btype BookType
@@ -301,6 +326,8 @@ func main() {
 					bfound, bookFound = checkBookValidity(bname, lib)
 					if bfound {
 						bookFound.Return()
+						idx := bookIndex(member.BooksBorrowed, *bookFound)
+						member.BooksBorrowed = removeBookMember(member.BooksBorrowed, idx)
 						fmt.Println("Book Returned")
 						fmt.Println(lib)
 					}
