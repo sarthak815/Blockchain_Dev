@@ -143,7 +143,7 @@ func checkUserNameValidity(username string, lib Library, db *badger.DB) bool {
 }
 
 //checks if book borrowed and present in directory
-func checkUserBookValidity(bname string, lib Library, member Member) (bool, *Books) {
+func checkUserBookValidity(bname string, lib Library, member Member, db *badger.DB) (bool, *Books) {
 	bfound := false //Denotes book validity
 	borrowed := false
 	var bookFound *Books //Used to return book object that user wishes to borrow or return
@@ -151,8 +151,40 @@ func checkUserBookValidity(bname string, lib Library, member Member) (bool, *Boo
 		if lib.BooksBorrowed[i].B_Name == bname {
 			bookFound = &lib.BooksBorrowed[i]
 			bfound = true
-			break
+			return bfound, bookFound
 		}
+	}
+	if err := db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchSize = 10
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			k := string(item.Key())
+			if k == bname {
+				err := item.Value(func(v []byte) error {
+
+					// Create an encoder and send a value.
+					enc := gob.NewDecoder(bytes.NewBuffer(v))
+					err := enc.Decode(&bookFound)
+					if err != nil {
+						log.Fatal("Error in decoding user validity return:", err)
+					}
+					lib.BooksBorrowed = append(lib.BooksBorrowed, *bookFound)
+					return nil
+				})
+				if err != nil {
+					return err
+				}
+				bfound = true
+				break
+			}
+
+		}
+		return nil
+	}); err != nil {
+		fmt.Println("DB Reading Error on library module")
 	}
 	if bfound { //used for out of index error handling
 		for i := range member.BooksBorrowed { // checks if user has borrowed same book

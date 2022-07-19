@@ -17,27 +17,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//err = db.View(func(txn *badger.Txn) error {
-	//	opts := badger.DefaultIteratorOptions
-	//	opts.PrefetchSize = 10
-	//	it := txn.NewIterator(opts)
-	//	defer it.Close()
-	//	for it.Rewind(); it.Valid(); it.Next() {
-	//		item := it.Item()
-	//		k := item.Key()
-	//		err := item.Value(func(v []byte) error {
-	//			fmt.Printf("key=%s \n", k)
-	//			return nil
-	//		})
-	//		if err != nil {
-	//			return err
-	//		}
-	//	}
-	//	return nil
-	//})
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 	defer db.Close()
 	// To keep program running for multiple operations
 	for {
@@ -195,7 +174,7 @@ func main() {
 						}
 					}
 
-					bfound, bookFound := checkUserBookValidity(bname, lib, *member) //checks if book is available and borrowed then stores book pointed to bookFound
+					bfound, bookFound := checkUserBookValidity(bname, lib, *member, db) //checks if book is available and borrowed then stores book pointed to bookFound
 					if bfound {
 						bookFound.Return()                                                 //modifies book borrowed value
 						idx := bookIndex(member.BooksBorrowed, *bookFound)                 //obtains index of borrowed book in user struct
