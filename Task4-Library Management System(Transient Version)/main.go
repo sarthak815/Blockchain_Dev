@@ -7,225 +7,7 @@ import (
 	"os"
 )
 
-//*********************ENUMS*********************
-
-type BookType int
-
-//book type enum
-const (
-	eBook        BookType = iota //digital
-	Audiobook                    //digital
-	Hardback                     //physical
-	Paperback                    //physical
-	Encyclopedia                 //both
-	Magazine                     //both
-	Comic                        //both
-)
-
-//*********************STRUCTS*********************
-//Book struct to hold digital and physical books
-type Books struct {
-	B_type   BookType
-	B_Name   string
-	B_Author string
-	Capacity int
-	Borrowed int
-}
-
-//Member Structure
-type Member struct {
-	Name          string
-	Age           int
-	BooksBorrowed []Books
-}
-
-//Library structure
-type Library struct {
-	BooksBorrowed []Books
-	Members       []Member
-}
-
-//*********************STRUCT CONSTRUCTORS*********************
-//Constructor initialising member struct
-func (member *Member) Init(name string, age int) {
-	member.Name = name
-	member.Age = age
-
-}
-
-//Book constructor to create a book object for digital and physical
-func (book *Books) Init(btype BookType, name, author string, capacity int) {
-	book.B_type = btype
-	book.B_Name = name
-	book.B_Author = author
-	book.Capacity = capacity
-	book.Borrowed = 0 //Initially always available to borrow
-}
-
-//*********************INTERFACES*********************
-//book interface with all functions
-type Book interface {
-	Booktype() string
-	Name() string
-	Author() string
-	Borrow() bool //checks if available to borrow
-	Return()      //returns a particular book
-}
-
-//*********************INTERFACE FUNCTION IMPLEMENTATION*********************
-//Booktype() returns the string value of book type
-func (b Books) Booktype() string {
-	return [...]string{"eBook", "Audiobook", "Hardback", "Paperback", "Encyclopedia", "Magazine", "Comic"}[b.B_type]
-}
-
-//Name() returns book name
-func (b Books) Name() string {
-	return b.B_Name
-}
-
-//Author() returns author name
-func (b Books) Author() string {
-	return b.B_Author
-}
-
-//Borrow() returns bool value indicating whether book is available to borrow
-func (b *Books) Borrow() bool {
-	borrowed := true
-	if b.Capacity <= b.Borrowed {
-		borrowed = false
-	} else {
-		b.Borrowed++
-	}
-	return borrowed
-}
-
-//Return() Returns a book object by decrementing the borrowed value from library struct
-func (b *Books) Return() {
-	b.Borrowed--
-}
-
-//*********************FUNCTIONS USED IN MAIN FUNC*********************
-//removeBookMember() removes a particular book from member's books slice
-func removeBookMember(slice []Books, s int) []Books {
-	return append(slice[:s], slice[s+1:]...)
-}
-
-//BookIndex() returns the position of the book to be removed from the member book slice
-func bookIndex(slice []Books, book Books) int {
-	idx := -1
-	for i := range slice {
-		if slice[i].B_Name == book.B_Name {
-			idx = i
-			break
-		}
-	}
-	return idx
-}
-
-//Checks if the user wishing to borrow is registered and eligible
-func checkUserValidity(name string, lib Library) (bool, *Member) {
-	b := false         //Denotes user validity
-	var member *Member //Used to return member object of user that wishes to borrow or return
-	for i := range lib.Members {
-		if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
-			member = &lib.Members[i]
-			b = true
-			break
-		}
-	}
-	if b { //used for out of index error handling
-		if len(member.BooksBorrowed) == 5 {
-			b = false
-		}
-	}
-	return b, member
-}
-
-//Checks if the user wishing to return is eligible
-func checkUserValidityReturn(name string, lib Library) (bool, *Member) {
-	b := false         //Denotes user validity
-	var member *Member //Used to return member object of user that wishes to borrow or return
-	for i := range lib.Members {
-		if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
-			member = &lib.Members[i]
-			b = true
-			break
-		}
-	}
-	return b, member
-}
-
-//Checks if book is present in the library and user eligible to borrow
-func checkBookValidity(bname string, lib Library, member *Member) (bool, *Books) {
-	bfound := false //Denotes book validity
-	borrowed := false
-	var bookFound *Books //Used to return book object that user wishes to borrow
-	for i := range lib.BooksBorrowed {
-		if lib.BooksBorrowed[i].B_Name == bname {
-			bookFound = &lib.BooksBorrowed[i]
-			bfound = true
-			break
-		}
-	}
-	if bfound { //used for out of index error handling
-		for i := range member.BooksBorrowed { // checks if user has borrowed book already
-			if member.BooksBorrowed[i].B_Name == bookFound.B_Name {
-				borrowed = true
-			}
-		}
-	}
-	if borrowed {
-		bfound = false
-	}
-	return bfound, bookFound
-}
-
-//checks if book borrowed and present in directory
-func checkUserBookValidity(bname string, lib Library, member Member) (bool, *Books) {
-	bfound := false //Denotes book validity
-	borrowed := false
-	var bookFound *Books //Used to return book object that user wishes to borrow or return
-	for i := range lib.BooksBorrowed {
-		if lib.BooksBorrowed[i].B_Name == bname {
-			bookFound = &lib.BooksBorrowed[i]
-			bfound = true
-			break
-		}
-	}
-	if bfound { //used for out of index error handling
-		for i := range member.BooksBorrowed { // checks if user has borrowed same book
-			if member.BooksBorrowed[i].B_Name == bookFound.B_Name {
-				borrowed = true
-			}
-		}
-	}
-	if !borrowed { //incase book not borrowed by user
-		bfound = false
-	}
-	return bfound, bookFound
-}
-
-//checks if username is unique as it acts as primary key
-func checkUserNameValidity(username string, lib Library) bool {
-	b := true
-	for i := range lib.Members {
-		if username == lib.Members[i].Name {
-			b = false
-			break
-		}
-	}
-	return b
-}
-
-//Prints details of the book
-func printBookDetails(bookFound *Books) {
-	fmt.Println("Details of the book: ")
-	fmt.Println("Book Type: " + bookFound.Booktype())
-	fmt.Println("Book Name: " + bookFound.Name())
-	fmt.Println("Book Author: " + bookFound.Author())
-	fmt.Println("Book Issued")
-
-}
+//*********************Helper Functions*********************
 
 func main() {
 	var lib Library
@@ -234,13 +16,16 @@ func main() {
 	for {
 		fmt.Println("Enter 1.Enter Librarian Interface\n2.Enter User Interface\n3.Exit")
 		var n int
-		fmt.Scanln(&n) // Option choice stored
+		fmt.Scanln(&n) // Option choice stored\
+		switch n {
 		// Enter Library Management System
-		if n == 1 {
+		case 1:
 			fmt.Println("Enter 1.Enter Book in LibraryDB\n2.Exit")
 			var n int
 			fmt.Scanln(&n)
-			if n == 1 {
+			switch n {
+			//Case 1 enters new book in library
+			case 1:
 				newBook := new(Books)
 				//var typeBook string
 				var bookType BookType
@@ -253,7 +38,8 @@ func main() {
 				fmt.Println("Enter Author of book: ")
 				scanner.Scan()
 				author := scanner.Text()
-				if bookType <= 1 { // Indicates book to be of type eBook
+				// Indicates book to be of type eBook
+				if bookType <= 1 {
 					var capacity int
 					fmt.Println("Enter borrowing limit: ") //Total copies available to borrow for digital
 					fmt.Scanln(&capacity)
@@ -262,13 +48,15 @@ func main() {
 					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
 
 				}
-				if bookType > 1 && bookType <= 3 { //Indicates book to be of Physical type
+				//Indicates book to be of Physical type
+				if bookType > 1 && bookType <= 3 {
 					newBook.Init(bookType, name, author, 1) // capaccity set to 1 as physical copy can only be 1 piece
 					log.Println(newBook)
 					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
 
 				}
-				if bookType > 3 { //Indicates book to be of Physical and Digital
+				//Indicates book to be of Physical and Digital
+				if bookType > 3 {
 					var capacity int
 					fmt.Println("Enter borrowing limit for digital: ")
 					fmt.Scanln(&capacity)
@@ -279,18 +67,19 @@ func main() {
 					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
 				}
 				log.Println(lib) //logs changes made to library struct
-			}
-			if n == 2 { //exit clause to quit library management interface
-				break
-			}
 
-		}
+			// exit clause to quit library management interface
+			case 2:
+				break
+
+			}
 		//Enters user interface to register/borrow/return
-		if n == 2 {
+		case 2:
 			fmt.Println("1.Enter Member Details\n2.Borrow a book\n3.Return Book\n4.Exit")
 			var n int
 			fmt.Scanln(&n) //stores user choice
-			if n == 1 {    //User registration portal
+			switch n {
+			case 1: //User registration portal
 				member := new(Member) //creates new member
 				fmt.Println("Enter name:")
 				scanner.Scan()
@@ -307,9 +96,7 @@ func main() {
 
 				lib.Members = append(lib.Members, *member)
 				log.Println(lib) //logs changes made to users
-
-			}
-			if n == 2 { //Book borrowing portal
+			case 2: //Book borrowing portal
 				var verifiedMember *Member //used to obtain user details
 				var b bool                 //checks if username is valid
 				fmt.Println("Enter your name: ")
@@ -352,8 +139,7 @@ func main() {
 					fmt.Println("Details not found or Already reached limit!")
 				}
 				fmt.Println(lib)
-			}
-			if n == 3 { //Portal for user to return book
+			case 3: //Portal for user to return book
 
 				fmt.Println("Enter your name: ")
 				scanner.Scan()
@@ -395,14 +181,13 @@ func main() {
 				} else { //if user details not present in library
 					fmt.Println("Details not found!! Please Register yourself!")
 				}
-			}
-			if n == 4 { //exit clause for user portal
+			case 4: //exit clause for user portal
 				break
 			}
-		}
 		//exit clause to close application
-		if n == 3 {
-			break
+		case 3:
+			os.Exit(0)
+
 		}
 
 	}

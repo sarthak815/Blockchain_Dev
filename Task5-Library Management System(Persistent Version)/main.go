@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio" // To read lines with whitespace
-	"encoding/gob"
+	"bytes"
 	"fmt"
+	"github.com/dgraph-io/badger/v3"
 	"log"
 	"os"
+	"time"
 )
 
 //*********************ENUMS*********************
@@ -228,23 +230,32 @@ func printBookDetails(bookFound *Books) {
 
 }
 
-func writeGob(filePath string, object interface{}) error {
-	file, err := os.Create(filePath)
-	if err == nil {
-		encoder := gob.NewEncoder(file)
-		encoder.Encode(object)
-	}
-	file.Close()
-	return err
+func (v *[]Books) MarshalBinaryBooks() ([]byte, error) {
+	// A simple encoding: plain text.
+	var b bytes.Buffer
+	fmt.Fprintln(&b, v.x, v.y, v.z)
+	return b.Bytes(), nil
 }
 
-func readGob(filePath string, object interface{}) error {
-	file, err := os.Open(filePath)
-	if err == nil {
-		decoder := gob.NewDecoder(file)
-		err = decoder.Decode(object)
-	}
-	file.Close()
+// UnmarshalBinary modifies the receiver so it must take a pointer receiver.
+func (v *Vector) UnmarshalBinaryBooks(data []byte) error {
+	// A simple encoding: plain text.
+	b := bytes.NewBuffer(data)
+	_, err := fmt.Fscanln(b, &v.x, &v.y, &v.z)
+	return err
+}
+func (v Vector) MarshalBinaryMember() ([]byte, error) {
+	// A simple encoding: plain text.
+	var b bytes.Buffer
+	fmt.Fprintln(&b, v.x, v.y, v.z)
+	return b.Bytes(), nil
+}
+
+// UnmarshalBinary modifies the receiver so it must take a pointer receiver.
+func (v *Vector) UnmarshalBinaryMember(data []byte) error {
+	// A simple encoding: plain text.
+	b := bytes.NewBuffer(data)
+	_, err := fmt.Fscanln(b, &v.x, &v.y, &v.z)
 	return err
 }
 
@@ -264,8 +275,42 @@ func loadGobtoLibMembers() []Member {
 	}
 	return *members
 }
+
+func Close(badgerDB *badger.DB) {
+	err := badgerDB.Close()
+	if err == nil {
+		log.Println("database closed", "err", err)
+	} else {
+		log.Println("failed to close database", "err", err)
+	}
+}
+func SetWithTTL(badgerDB *badger.DB, key []byte, value []byte, ttl int64) {
+	wb := badgerDB.NewWriteBatch()
+	defer wb.Cancel()
+	err := wb.SetEntry(badger.NewEntry(key, value).WithMeta(0).WithTTL(time.Duration(ttl * time.Second.Nanoseconds())))
+	if err != nil {
+		log.Println("Failed to write data to cache.", "key", string(key), "value", string(value), "err", err)
+	}
+	err = wb.Flush()
+	if err != nil {
+		log.Println("Failed to flush data to cache.", "key", string(key), "value", string(value), "err", err)
+	}
+}
+
 func main() {
 	var lib Library
+
+	db, err := badger.Open(badger.DefaultOptions("/tmp/badger"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	err := db.View(func(txn *badger.Txn) error {
+		books, err := txn.Get([]byte("booksDir"))
+		handle(err)
+
+		return nil
+	})
 	lib.BooksBorrowed = loadGobtoLibBooks()
 	lib.Members = loadGobtoLibMembers()
 	scanner := bufio.NewScanner(os.Stdin)
