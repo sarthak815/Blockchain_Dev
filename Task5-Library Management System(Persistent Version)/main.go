@@ -3,328 +3,56 @@ package main
 import (
 	"bufio" // To read lines with whitespace
 	"bytes"
+	"encoding/gob"
 	"fmt"
-	"github.com/dgraph-io/badger/v3"
+	badger "github.com/dgraph-io/badger/v3"
 	"log"
 	"os"
-	"time"
 )
-
-//*********************ENUMS*********************
-
-type BookType int
-
-//book type enum
-const (
-	eBook        BookType = iota //digital
-	Audiobook                    //digital
-	Hardback                     //physical
-	Paperback                    //physical
-	Encyclopedia                 //both
-	Magazine                     //both
-	Comic                        //both
-)
-
-//*********************STRUCTS*********************
-//Book struct to hold digital and physical books
-type Books struct {
-	B_type   BookType
-	B_Name   string
-	B_Author string
-	Capacity int
-	Borrowed int
-}
-
-//Member Structure
-type Member struct {
-	Name          string
-	Age           int
-	BooksBorrowed []Books
-}
-
-//Library structure
-type Library struct {
-	BooksBorrowed []Books
-	Members       []Member
-}
-
-//*********************STRUCT CONSTRUCTORS*********************
-//Constructor initialising member struct
-func (member *Member) Init(name string, age int) {
-	member.Name = name
-	member.Age = age
-
-}
-
-//Book constructor to create a book object for digital and physical
-func (book *Books) Init(btype BookType, name, author string, capacity int) {
-	book.B_type = btype
-	book.B_Name = name
-	book.B_Author = author
-	book.Capacity = capacity
-	book.Borrowed = 0 //Initially always available to borrow
-}
-
-//*********************INTERFACES*********************
-//book interface with all functions
-type Book interface {
-	Booktype() string
-	Name() string
-	Author() string
-	Borrow() bool //checks if available to borrow
-	Return()      //returns a particular book
-}
-
-//*********************INTERFACE FUNCTION IMPLEMENTATION*********************
-//Booktype() returns the string value of book type
-func (b Books) Booktype() string {
-	return [...]string{"eBook", "Audiobook", "Hardback", "Paperback", "Encyclopedia", "Magazine", "Comic"}[b.B_type]
-}
-
-//Name() returns book name
-func (b Books) Name() string {
-	return b.B_Name
-}
-
-//Author() returns author name
-func (b Books) Author() string {
-	return b.B_Author
-}
-
-//Borrow() returns bool value indicating whether book is available to borrow
-func (b *Books) Borrow() bool {
-	borrowed := true
-	if b.Capacity <= b.Borrowed {
-		borrowed = false
-	} else {
-		b.Borrowed++
-	}
-	return borrowed
-}
-
-//Return() Returns a book object by decrementing the borrowed value from library struct
-func (b *Books) Return() {
-	b.Borrowed--
-}
-
-//*********************FUNCTIONS USED IN MAIN FUNC*********************
-//removeBookMember() removes a particular book from member's books slice
-func removeBookMember(slice []Books, s int) []Books {
-	return append(slice[:s], slice[s+1:]...)
-}
-
-//BookIndex() returns the position of the book to be removed from the member book slice
-func bookIndex(slice []Books, book Books) int {
-	idx := -1
-	for i := range slice {
-		if slice[i].B_Name == book.B_Name {
-			idx = i
-			break
-		}
-	}
-	return idx
-}
-
-//Checks if the user wishing to borrow is registered and eligible
-func checkUserValidity(name string, lib Library) (bool, *Member) {
-	b := false         //Denotes user validity
-	var member *Member //Used to return member object of user that wishes to borrow or return
-	for i := range lib.Members {
-		if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
-			member = &lib.Members[i]
-			b = true
-			break
-		}
-	}
-	if b { //used for out of index error handling
-		if len(member.BooksBorrowed) == 5 {
-			b = false
-		}
-	}
-	return b, member
-}
-
-//Checks if the user wishing to return is eligible
-func checkUserValidityReturn(name string, lib Library) (bool, *Member) {
-	b := false         //Denotes user validity
-	var member *Member //Used to return member object of user that wishes to borrow or return
-	for i := range lib.Members {
-		if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
-			member = &lib.Members[i]
-			b = true
-			break
-		}
-	}
-	return b, member
-}
-
-//Checks if book is present in the library and user eligible to borrow
-func checkBookValidity(bname string, lib Library, member *Member) (bool, *Books) {
-	bfound := false //Denotes book validity
-	borrowed := false
-	var bookFound *Books //Used to return book object that user wishes to borrow
-	for i := range lib.BooksBorrowed {
-		if lib.BooksBorrowed[i].B_Name == bname {
-			bookFound = &lib.BooksBorrowed[i]
-			bfound = true
-			break
-		}
-	}
-	if bfound { //used for out of index error handling
-		for i := range member.BooksBorrowed { // checks if user has borrowed book already
-			if member.BooksBorrowed[i].B_Name == bookFound.B_Name {
-				borrowed = true
-			}
-		}
-	}
-	if borrowed {
-		bfound = false
-	}
-	return bfound, bookFound
-}
-
-//checks if book borrowed and present in directory
-func checkUserBookValidity(bname string, lib Library, member Member) (bool, *Books) {
-	bfound := false //Denotes book validity
-	borrowed := false
-	var bookFound *Books //Used to return book object that user wishes to borrow or return
-	for i := range lib.BooksBorrowed {
-		if lib.BooksBorrowed[i].B_Name == bname {
-			bookFound = &lib.BooksBorrowed[i]
-			bfound = true
-			break
-		}
-	}
-	if bfound { //used for out of index error handling
-		for i := range member.BooksBorrowed { // checks if user has borrowed same book
-			if member.BooksBorrowed[i].B_Name == bookFound.B_Name {
-				borrowed = true
-			}
-		}
-	}
-	if !borrowed { //incase book not borrowed by user
-		bfound = false
-	}
-	return bfound, bookFound
-}
-
-//checks if username is unique as it acts as primary key
-func checkUserNameValidity(username string, lib Library) bool {
-	b := true
-	for i := range lib.Members {
-		if username == lib.Members[i].Name {
-			b = false
-			break
-		}
-	}
-	return b
-}
-
-//Prints details of the book
-func printBookDetails(bookFound *Books) {
-	fmt.Println("Details of the book: ")
-	fmt.Println("Book Type: " + bookFound.Booktype())
-	fmt.Println("Book Name: " + bookFound.Name())
-	fmt.Println("Book Author: " + bookFound.Author())
-	fmt.Println("Book Issued")
-
-}
-
-func (v *[]Books) MarshalBinaryBooks() ([]byte, error) {
-	// A simple encoding: plain text.
-	var b bytes.Buffer
-	fmt.Fprintln(&b, v.x, v.y, v.z)
-	return b.Bytes(), nil
-}
-
-// UnmarshalBinary modifies the receiver so it must take a pointer receiver.
-func (v *Vector) UnmarshalBinaryBooks(data []byte) error {
-	// A simple encoding: plain text.
-	b := bytes.NewBuffer(data)
-	_, err := fmt.Fscanln(b, &v.x, &v.y, &v.z)
-	return err
-}
-func (v Vector) MarshalBinaryMember() ([]byte, error) {
-	// A simple encoding: plain text.
-	var b bytes.Buffer
-	fmt.Fprintln(&b, v.x, v.y, v.z)
-	return b.Bytes(), nil
-}
-
-// UnmarshalBinary modifies the receiver so it must take a pointer receiver.
-func (v *Vector) UnmarshalBinaryMember(data []byte) error {
-	// A simple encoding: plain text.
-	b := bytes.NewBuffer(data)
-	_, err := fmt.Fscanln(b, &v.x, &v.y, &v.z)
-	return err
-}
-
-func loadGobtoLibBooks() []Books {
-	var booksBorrowed = new([]Books)
-	err := readGob("./books_borrowed.gob", booksBorrowed)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return *booksBorrowed
-}
-func loadGobtoLibMembers() []Member {
-	var members = new([]Member)
-	err := readGob("./members.gob", members)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return *members
-}
-
-func Close(badgerDB *badger.DB) {
-	err := badgerDB.Close()
-	if err == nil {
-		log.Println("database closed", "err", err)
-	} else {
-		log.Println("failed to close database", "err", err)
-	}
-}
-func SetWithTTL(badgerDB *badger.DB, key []byte, value []byte, ttl int64) {
-	wb := badgerDB.NewWriteBatch()
-	defer wb.Cancel()
-	err := wb.SetEntry(badger.NewEntry(key, value).WithMeta(0).WithTTL(time.Duration(ttl * time.Second.Nanoseconds())))
-	if err != nil {
-		log.Println("Failed to write data to cache.", "key", string(key), "value", string(value), "err", err)
-	}
-	err = wb.Flush()
-	if err != nil {
-		log.Println("Failed to flush data to cache.", "key", string(key), "value", string(value), "err", err)
-	}
-}
 
 func main() {
 	var lib Library
-
-	db, err := badger.Open(badger.DefaultOptions("/tmp/badger"))
+	scanner := bufio.NewScanner(os.Stdin)
+	db, err := badger.Open(badger.DefaultOptions("C:\\Users\\Sanjay\\OneDrive - Manipal Academy of Higher Education\\Documents\\GitHub\\Blockchain_Dev\\Task5-Library Management System(Persistent Version)\\tmp\\badger"))
 	if err != nil {
 		log.Fatal(err)
 	}
+	//err = db.View(func(txn *badger.Txn) error {
+	//	opts := badger.DefaultIteratorOptions
+	//	opts.PrefetchSize = 10
+	//	it := txn.NewIterator(opts)
+	//	defer it.Close()
+	//	for it.Rewind(); it.Valid(); it.Next() {
+	//		item := it.Item()
+	//		k := item.Key()
+	//		err := item.Value(func(v []byte) error {
+	//			fmt.Printf("key=%s \n", k)
+	//			return nil
+	//		})
+	//		if err != nil {
+	//			return err
+	//		}
+	//	}
+	//	return nil
+	//})
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 	defer db.Close()
-	err := db.View(func(txn *badger.Txn) error {
-		books, err := txn.Get([]byte("booksDir"))
-		handle(err)
-
-		return nil
-	})
-	lib.BooksBorrowed = loadGobtoLibBooks()
-	lib.Members = loadGobtoLibMembers()
-	scanner := bufio.NewScanner(os.Stdin)
 	// To keep program running for multiple operations
 	for {
 		fmt.Println("Enter 1.Enter Librarian Interface\n2.Enter User Interface\n3.Exit")
 		var n int
-		fmt.Scanln(&n) // Option choice stored
+		fmt.Scanln(&n) // Option choice stored\
+		switch n {
 		// Enter Library Management System
-		if n == 1 {
+		case 1:
 			fmt.Println("Enter 1.Enter Book in LibraryDB\n2.Exit")
 			var n int
 			fmt.Scanln(&n)
-			if n == 1 {
+			switch n {
+			//Case 1 enters new book in library
+			case 1:
 				newBook := new(Books)
 				//var typeBook string
 				var bookType BookType
@@ -337,7 +65,8 @@ func main() {
 				fmt.Println("Enter Author of book: ")
 				scanner.Scan()
 				author := scanner.Text()
-				if bookType <= 1 { // Indicates book to be of type eBook
+				// Indicates book to be of type eBook
+				if bookType <= 1 {
 					var capacity int
 					fmt.Println("Enter borrowing limit: ") //Total copies available to borrow for digital
 					fmt.Scanln(&capacity)
@@ -346,13 +75,15 @@ func main() {
 					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
 
 				}
-				if bookType > 1 && bookType <= 3 { //Indicates book to be of Physical type
+				//Indicates book to be of Physical type
+				if bookType > 1 && bookType <= 3 {
 					newBook.Init(bookType, name, author, 1) // capaccity set to 1 as physical copy can only be 1 piece
 					log.Println(newBook)
 					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
 
 				}
-				if bookType > 3 { //Indicates book to be of Physical and Digital
+				//Indicates book to be of Physical and Digital
+				if bookType > 3 {
 					var capacity int
 					fmt.Println("Enter borrowing limit for digital: ")
 					fmt.Scanln(&capacity)
@@ -362,25 +93,25 @@ func main() {
 					newBook.Init(bookType, name+"Physical", author, 1) // Creating physical copy
 					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
 				}
-
 				log.Println(lib) //logs changes made to library struct
-			}
-			if n == 2 { //exit clause to quit library management interface
-				break
-			}
 
-		}
+			// exit clause to quit library management interface
+			case 2:
+				break
+
+			}
 		//Enters user interface to register/borrow/return
-		if n == 2 {
+		case 2:
 			fmt.Println("1.Enter Member Details\n2.Borrow a book\n3.Return Book\n4.Exit")
 			var n int
 			fmt.Scanln(&n) //stores user choice
-			if n == 1 {    //User registration portal
+			switch n {
+			case 1: //User registration portal
 				member := new(Member) //creates new member
 				fmt.Println("Enter name:")
 				scanner.Scan()
 				name := scanner.Text()
-				b := checkUserNameValidity(name, lib) // checks if username is valid
+				b := checkUserNameValidity(name, lib, db) // checks if username is valid
 				if !b {
 					fmt.Println("Username taken! Please Enter Full Name!")
 					continue
@@ -391,18 +122,16 @@ func main() {
 				member.Init(name, age)
 
 				lib.Members = append(lib.Members, *member)
-
 				log.Println(lib) //logs changes made to users
-
-			}
-			if n == 2 { //Book borrowing portal
+			case 2: //Book borrowing portal
 				var verifiedMember *Member //used to obtain user details
 				var b bool                 //checks if username is valid
 				fmt.Println("Enter your name: ")
 				scanner.Scan()
 				name := scanner.Text()
-				b, verifiedMember = checkUserValidity(name, lib) //checks username validity and number of books that user has borrowed is below 5
-				if b {                                           //if user is valid and registered
+				b, verifiedMember = checkUserValidity(name, &lib, db) //checks username validity and number of books that user has borrowed is below 5
+				b, verifiedMember = checkUserValidity(name, &lib, db)
+				if b { //if user is valid and registered
 					fmt.Println("Identity verified")
 					var btype BookType
 					fmt.Println("Enter BookType: \n1.Ebook\n2. AudioBook\n3. HardBack\n4. PaperBack\n5. Encyclopedia\n6. Magazine\n7. Comic: ")
@@ -421,7 +150,8 @@ func main() {
 							bname += "Physical" //appends physical to name in format in which stored in slice
 						}
 					}
-					bfound, bookFound := checkBookValidity(bname, lib, verifiedMember) //checks if book is available then stores book pointed to bookFound
+					bfound, bookFound := checkBookValidity(bname, &lib, verifiedMember, db) //checks if book is available then stores book pointed to bookFound
+					bfound, bookFound = checkBookValidity(bname, &lib, verifiedMember, db)
 					if bfound {
 						if !bookFound.Borrow() { //Borrow() checks if book id available to borrow
 							fmt.Println("Book Unavailable")
@@ -438,13 +168,12 @@ func main() {
 					fmt.Println("Details not found or Already reached limit!")
 				}
 				fmt.Println(lib)
-			}
-			if n == 3 { //Portal for user to return book
+			case 3: //Portal for user to return book
 
 				fmt.Println("Enter your name: ")
 				scanner.Scan()
 				name := scanner.Text()
-				b, member := checkUserValidityReturn(name, lib) //checks validity of user
+				b, member := checkUserValidityReturn(name, &lib, db) //checks validity of user
 				if b {
 					fmt.Println("Identity verified")
 					var btype BookType
@@ -481,25 +210,50 @@ func main() {
 				} else { //if user details not present in library
 					fmt.Println("Details not found!! Please Register yourself!")
 				}
-			}
-			if n == 4 { //exit clause for user portal
+			case 4: //exit clause for user portal
 				break
 			}
-		}
 		//exit clause to close application
-		if n == 3 {
-			err := writeGob("./books_borrowed.gob", lib.BooksBorrowed)
-			if err != nil {
-				fmt.Println(err)
-			}
-			err = writeGob("./members.gob", lib.Members)
-			if err != nil {
-				fmt.Println(err)
-			}
+		case 3:
+			for i := range lib.BooksBorrowed {
+				var bookBytes bytes.Buffer // Stand-in for the bookBytes.
+				// Create an encoder and send a value.
+				enc := gob.NewEncoder(&bookBytes)
+				err := enc.Encode(lib.BooksBorrowed[i])
+				if err != nil {
+					log.Fatal("encode:", err)
+				}
+				txn := db.NewTransaction(true)
+				defer txn.Discard()
+				e := badger.NewEntry([]byte(lib.BooksBorrowed[i].Name()), bookBytes.Bytes())
+				_ = txn.SetEntry(e)
 
-			break
+				_ = txn.Commit()
+
+				fmt.Println("Inserted books")
+			}
+			for i := range lib.Members {
+				var memberBytes bytes.Buffer // Stand-in for the memberBytes.
+				// Create an encoder and send a value.
+				enc := gob.NewEncoder(&memberBytes)
+				err := enc.Encode(lib.Members[i])
+				if err != nil {
+					log.Fatal("encode:", err)
+				}
+				txn := db.NewTransaction(true)
+				defer txn.Discard()
+				if err := txn.Set([]byte(lib.Members[i].Name), memberBytes.Bytes()); err != nil {
+					log.Println("Commmit Error")
+				}
+
+				if err := txn.Commit(); err != nil {
+					log.Println("Commmit Error")
+				}
+
+				fmt.Println("Inserted Members")
+			}
+			os.Exit(0)
 		}
 
 	}
-
 }

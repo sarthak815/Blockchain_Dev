@@ -2,9 +2,7 @@ package main
 
 import (
 	"bytes"
-	"encoding/gob"
 	"fmt"
-	"log"
 )
 
 // The Vector type has unexported fields, which the package cannot access.
@@ -30,28 +28,45 @@ func (v *Vector) UnmarshalBinary(data []byte) error {
 	b := bytes.NewBuffer(data)
 	_, err := fmt.Fscanln(b, &v.x, &v.y, &v.z)
 	return err
-}
-
-// This example transmits a value that implements the custom encoding and decoding methods.
-func main() {
-	var network bytes.Buffer // Stand-in for the network.
-
-	// Create an encoder and send a value.
-	enc := gob.NewEncoder(&network)
-	fmt.Println(network)
-	err := enc.Encode(Vector{3, 4, 5})
-	fmt.Println(network)
-	if err != nil {
-		log.Fatal("encode:", err)
-	}
-
-	// Create a decoder and receive a value.
-	dec := gob.NewDecoder(&network)
-	var v Vector
-	err = dec.Decode(&v)
-	if err != nil {
-		log.Fatal("decode:", err)
-	}
-	fmt.Println(v)
-
+	//}
+	//
+	//// This example transmits a value that implements the custom encoding and decoding methods.
+	//func main() {
+	//	db, err := badger.Open(badger.DefaultOptions("C:\\Users\\Sanjay\\OneDrive - Manipal Academy of Higher Education\\Documents\\GitHub\\Blockchain_Dev\\Task5-Library Management System(Persistent Version)\\tmp\\badger"))
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//	err = db.View(func(txn *badger.Txn) error {
+	//		opts := badger.DefaultIteratorOptions
+	//		opts.PrefetchSize = 10
+	//		it := txn.NewIterator(opts)
+	//		defer it.Close()
+	//		for it.Rewind(); it.Valid(); it.Next() {
+	//			item := it.Item()
+	//			k := item.Key()
+	//			err := item.Value(func(v []byte) error {
+	//				fmt.Printf("key=%s, value=%s\n", k, v)
+	//				return nil
+	//			})
+	//			if err != nil {
+	//				return err
+	//			}
+	//		}
+	//		return nil
+	//	})
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//err = db.Update(func(txn *badger.Txn) error {
+	//	// Start a writable transaction.
+	//	txn = db.NewTransaction(true)
+	//	defer txn.Discard()
+	//	e := badger.NewEntry([]byte("Hello"), []byte("Yesssssssss"))
+	//	err := txn.SetEntry(e)
+	//	return err
+	//	err = txn.Commit()
+	//	return err
+	//})
+	//fmt.Println("Inserted Members")
+	//defer db.Close()
 }

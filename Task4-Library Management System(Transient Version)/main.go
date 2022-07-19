@@ -2,16 +2,27 @@ package main
 
 import (
 	"bufio" // To read lines with whitespace
+	"bytes"
 	"fmt"
+
 	"log"
 	"os"
 )
 
 //*********************Helper Functions*********************
 
+// UnmarshalBinary modifies the receiver so it must take a pointer receiver.
+func (v *Books) UnmarshalBinaryBook(data []byte) error {
+	// A simple encoding: plain text.
+	b := bytes.NewBuffer(data)
+	_, err := fmt.Fscanln(b, &v.x, &v.y, &v.z)
+	return err
+}
+
 func main() {
 	var lib Library
 	scanner := bufio.NewScanner(os.Stdin)
+
 	// To keep program running for multiple operations
 	for {
 		fmt.Println("Enter 1.Enter Librarian Interface\n2.Enter User Interface\n3.Exit")
@@ -186,6 +197,7 @@ func main() {
 			}
 		//exit clause to close application
 		case 3:
+
 			os.Exit(0)
 
 		}
