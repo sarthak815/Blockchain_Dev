@@ -64,3 +64,8 @@ Hunger Games
     "capacity":5,
     "borrowed":0
 }
+{
+    "name":"Sarthak",
+    "age":12,
+    "books":[]
+}

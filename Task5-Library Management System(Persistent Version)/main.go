@@ -73,7 +73,7 @@ func createNewMember(w http.ResponseWriter, r *http.Request) {
 	// our new Article
 	b := checkMemberValidityApi(memberJson.Name, &lib, db)
 	if b {
-		log.Println("Book found in DB already")
+		log.Println("Member found in DB already")
 		return
 	}
 	fmt.Println(memberJson)
@@ -106,7 +106,8 @@ func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", homePage)
 	myRouter.HandleFunc("/book", createNewBook).Methods("POST")
-	myRouter.HandleFunc("/book", createNewMember).Methods("POST")
+	myRouter.HandleFunc("/user", createNewMember).Methods("POST")
+	//myRouter.HandleFunc("/book", createNewMember).Methods("POST")
 	log.Fatal(http.ListenAndServe(":10000", myRouter))
 }
 

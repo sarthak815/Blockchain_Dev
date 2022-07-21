@@ -7,9 +7,9 @@ import (
 
 //Member Structure
 type Member struct {
-	Name          string `json:`
-	Age           int
-	BooksBorrowed []Books
+	Name          string  `json:"name"`
+	Age           int     `json:"age"`
+	BooksBorrowed []Books `json:"books"`
 }
 
 //*********************STRUCT CONSTRUCTORS*********************
