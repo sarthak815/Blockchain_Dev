@@ -2,6 +2,7 @@
 .gradle
 /local.properties
 /Task5-Library Management System(Persistent Version)/tmp
+/Task5-Library Management System(Persistent Version)/.idea
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml

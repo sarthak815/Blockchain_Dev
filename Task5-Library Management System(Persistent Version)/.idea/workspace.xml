@@ -4,17 +4,7 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ea84c1a2-b6d6-42bc-9777-ea56c21bd61f" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/books_borrowed.gob" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/codeModules/bookModule.go" beforeDir="false" afterPath="$PROJECT_DIR$/codeModules/bookModule.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/codeModules/libraryModule.go" beforeDir="false" afterPath="$PROJECT_DIR$/codeModules/libraryModule.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/codeModules/memberModule.go" beforeDir="false" afterPath="$PROJECT_DIR$/codeModules/memberModule.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/httpTest.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/members.gob" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/restAPI.go" beforeDir="false" afterPath="$PROJECT_DIR$/restAPI.go" afterDir="false" />
-    </list>
+    <list default="true" id="ea84c1a2-b6d6-42bc-9777-ea56c21bd61f" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
