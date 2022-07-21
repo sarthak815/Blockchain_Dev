@@ -117,9 +117,16 @@ func checkBookValidity(bname string, lib *Library, member *Member, db *badger.DB
 					// Create an encoder and send a value.
 					enc := gob.NewDecoder(bytes.NewBuffer(v))
 					err := enc.Decode(&bookFound)
-					lib.BooksBorrowed = append(lib.BooksBorrowed, *bookFound)
 					if err != nil {
 						log.Fatal("Error in decoding user validity return:", err)
+					}
+
+					lib.BooksBorrowed = append(lib.BooksBorrowed, *bookFound)
+					for i := range lib.BooksBorrowed {
+						if lib.BooksBorrowed[i].B_Name == bname {
+							bookFound = &lib.BooksBorrowed[i]
+							bfound = true
+						}
 					}
 
 					return nil

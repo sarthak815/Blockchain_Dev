@@ -43,13 +43,19 @@ func checkUserValidity(name string, lib *Library, db *badger.DB) (bool, *Member)
 						log.Fatal("Error in decoding user validity:", err)
 					}
 					lib.Members = append(lib.Members, *member)
+					for i := range lib.Members {
+						if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
+							member = &lib.Members[i]
+							b = true
+							break
+						}
+					}
 					return nil
 				})
 				if err != nil {
 					return err
 				}
-				b = true
-				break
+
 			}
 
 		}
@@ -58,7 +64,7 @@ func checkUserValidity(name string, lib *Library, db *badger.DB) (bool, *Member)
 		fmt.Println("DB Reading Error on library module")
 	}
 	if b { //used for out of index error handling
-		if len(member.BooksBorrowed) == 5 {
+		if len(member.BooksBorrowed) >= 5 {
 			b = false
 		}
 	}
@@ -94,6 +100,12 @@ func checkUserValidityReturn(name string, lib *Library, db *badger.DB) (bool, *M
 						log.Fatal("Error in decoding user validity return:", err)
 					}
 					lib.Members = append(lib.Members, *member)
+					for i := range lib.Members {
+						if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
+							member = &lib.Members[i]
+
+						}
+					}
 					return nil
 				})
 				if err != nil {
@@ -172,6 +184,12 @@ func checkUserBookValidity(bname string, lib Library, member Member, db *badger.
 						log.Fatal("Error in decoding user validity return:", err)
 					}
 					lib.BooksBorrowed = append(lib.BooksBorrowed, *bookFound)
+					for i := range lib.BooksBorrowed {
+						if lib.BooksBorrowed[i].B_Name == bname {
+							bookFound = &lib.BooksBorrowed[i]
+
+						}
+					}
 					return nil
 				})
 				if err != nil {

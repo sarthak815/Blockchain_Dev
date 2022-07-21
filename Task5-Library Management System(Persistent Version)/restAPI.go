@@ -74,13 +74,11 @@ func borrowBook(w http.ResponseWriter, r *http.Request) {
 	// update our global Articles array to include
 	// our new Article
 	b, verifiedMember := checkUserValidity(name, &lib, db) //checks username validity and number of books that user has borrowed is below 5
-	b, verifiedMember = checkUserValidity(name, &lib, db)
-	if b { //if user is valid and registered
+	if b {                                                 //if user is valid and registered
 		fmt.Println("Identity verified")
 		bname := borrower.BookN //stores book name to be borrowed
 
 		bfound, bookFound := checkBookValidity(bname, &lib, verifiedMember, db) //checks if book is available then stores book pointed to bookFound
-		bfound, bookFound = checkBookValidity(bname, &lib, verifiedMember, db)
 		if bfound {
 			if !bookFound.Borrow() { //Borrow() checks if book id available to borrow
 				fmt.Println("Book Unavailable")

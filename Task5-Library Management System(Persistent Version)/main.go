@@ -64,13 +64,17 @@ func main() {
 				}
 				//Indicates book to be of Physical and Digital
 				if bookType > 3 {
-					var capacity int
-					fmt.Println("Enter borrowing limit for digital: ")
-					fmt.Scanln(&capacity)
+					fmt.Println("Enter:\n1.Digital\n2.Physical")
+					var bookt, capacity int
+					capacity = 1
+					fmt.Scanln(&bookt)
+					if bookt == 1 {
+						fmt.Println("Enter borrowing limit for digital: ")
+						fmt.Scanln(&capacity)
+					}
+
 					newBook.Init(bookType, name+"Digital", author, capacity) //Creating digital copy
 					log.Println(newBook)
-					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
-					newBook.Init(bookType, name+"Physical", author, 1) // Creating physical copy
 					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
 				}
 				log.Println(lib) //logs changes made to library struct
@@ -110,8 +114,7 @@ func main() {
 				scanner.Scan()
 				name := scanner.Text()
 				b, verifiedMember = checkUserValidity(name, &lib, db) //checks username validity and number of books that user has borrowed is below 5
-				b, verifiedMember = checkUserValidity(name, &lib, db)
-				if b { //if user is valid and registered
+				if b {                                                //if user is valid and registered
 					fmt.Println("Identity verified")
 					var btype BookType
 					fmt.Println("Enter BookType: \n1.Ebook\n2. AudioBook\n3. HardBack\n4. PaperBack\n5. Encyclopedia\n6. Magazine\n7. Comic: ")
@@ -119,19 +122,8 @@ func main() {
 					fmt.Println("Enter Book name: ")
 					scanner.Scan()
 					bname := scanner.Text() //stores book name to be borrowed
-					var digPhy int
-					if btype > 4 { // In case of book type having physical and digital copies
-						fmt.Println("Enter Copy Type:\n1.Digital\n2.Physical")
-						fmt.Scanln(&digPhy)
-						if digPhy == 1 {
-							bname += "Digital" //appends digital to name in format in which stored in slice
-						}
-						if digPhy > 1 || digPhy < 1 {
-							bname += "Physical" //appends physical to name in format in which stored in slice
-						}
-					}
+
 					bfound, bookFound := checkBookValidity(bname, &lib, verifiedMember, db) //checks if book is available then stores book pointed to bookFound
-					bfound, bookFound = checkBookValidity(bname, &lib, verifiedMember, db)
 					if bfound {
 						if !bookFound.Borrow() { //Borrow() checks if book id available to borrow
 							fmt.Println("Book Unavailable")
@@ -176,10 +168,13 @@ func main() {
 					}
 
 					bfound, bookFound := checkUserBookValidity(bname, lib, *member, db) //checks if book is available and borrowed then stores book pointed to bookFound
+
 					if bfound {
 						bookFound.Return()                                                 //modifies book borrowed value
 						idx := bookIndex(member.BooksBorrowed, *bookFound)                 //obtains index of borrowed book in user struct
 						member.BooksBorrowed = removeBookMember(member.BooksBorrowed, idx) //removes returned book from user struct
+						fmt.Println(lib.Members[0])
+						fmt.Println(member)
 						fmt.Println("Book Returned")
 						log.Println(lib)
 					}
