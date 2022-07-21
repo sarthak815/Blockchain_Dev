@@ -65,7 +65,12 @@ Hunger Games
     "borrowed":0
 }
 {
-    "name":"Sarthak",
+    "name":"Samuel",
     "age":12,
     "books":[]
+}
+{
+    "name":"Tim",
+    "type":3,
+    "bookname":"Anna Karenina"
 }
