@@ -1,26 +1,126 @@
 package main
 
 import (
-	"bufio" // To read lines with whitespace
+	"bufio"
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	badger "github.com/dgraph-io/badger/v3"
+	"github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 )
 
-func main() {
-	var lib Library
-	scanner := bufio.NewScanner(os.Stdin)
-	db, err := badger.Open(badger.DefaultOptions("C:\\Users\\Sanjay\\OneDrive - Manipal Academy of Higher Education\\Documents\\GitHub\\Blockchain_Dev\\Task5-Library Management System(Persistent Version)\\tmp\\badger"))
-	if err != nil {
-		log.Fatal(err)
+var lib Library
+var db *badger.DB
+
+func homePage(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Welcome to the HomePage!")
+	fmt.Println("Endpoint Hit: homePage")
+}
+func createNewBook(w http.ResponseWriter, r *http.Request) {
+	// get the body of our POST request
+	// unmarshal this into a new Article struct
+	// append this to our Articles array.
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var bookJson Books
+	json.Unmarshal(reqBody, &bookJson)
+	// update our global Articles array to include
+	// our new Article
+	b := checkBookValidityApi(bookJson.B_Name, &lib, db)
+	if b {
+		log.Println("Book found in DB already")
+		return
 	}
+	fmt.Println(bookJson)
+	//Indicates book to be of Physical type
+	if bookJson.B_type > 1 && bookJson.B_type <= 3 {
+		bookJson.Capacity = 1
+
+	}
+	lib.BooksBorrowed = append(lib.BooksBorrowed, bookJson)
+	fmt.Println(lib)
+	for i := range lib.BooksBorrowed {
+		var bookBytes bytes.Buffer // Stand-in for the bookBytes.
+		// Create an encoder and send a value.
+		enc := gob.NewEncoder(&bookBytes)
+		err := enc.Encode(lib.BooksBorrowed[i])
+		if err != nil {
+			log.Fatal("encode:", err)
+		}
+		txn := db.NewTransaction(true)
+		defer txn.Discard()
+		e := badger.NewEntry([]byte(lib.BooksBorrowed[i].Name()), bookBytes.Bytes())
+		_ = txn.SetEntry(e)
+
+		_ = txn.Commit()
+
+		fmt.Println("Inserted books")
+	}
+	json.NewEncoder(w).Encode(bookJson)
+}
+func createNewMember(w http.ResponseWriter, r *http.Request) {
+	// get the body of our POST request
+	// unmarshal this into a new Article struct
+	// append this to our Articles array.
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var memberJson Member
+	json.Unmarshal(reqBody, &memberJson)
+	// update our global Articles array to include
+	// our new Article
+	b := checkMemberValidityApi(memberJson.Name, &lib, db)
+	if b {
+		log.Println("Book found in DB already")
+		return
+	}
+	fmt.Println(memberJson)
+
+	lib.Members = append(lib.Members, memberJson)
+	fmt.Println(lib)
+	for i := range lib.Members {
+		var memberBytes bytes.Buffer // Stand-in for the memberBytes.
+		// Create an encoder and send a value.
+		enc := gob.NewEncoder(&memberBytes)
+		err := enc.Encode(lib.Members[i])
+		if err != nil {
+			log.Fatal("encode:", err)
+		}
+		txn := db.NewTransaction(true)
+		defer txn.Discard()
+		if err := txn.Set([]byte(lib.Members[i].Name), memberBytes.Bytes()); err != nil {
+			log.Println("Commmit Error")
+		}
+
+		if err := txn.Commit(); err != nil {
+			log.Println("Commmit Error")
+		}
+
+		fmt.Println("Inserted Members")
+	}
+	json.NewEncoder(w).Encode(memberJson)
+}
+func handleRequests() {
+	myRouter := mux.NewRouter().StrictSlash(true)
+	myRouter.HandleFunc("/", homePage)
+	myRouter.HandleFunc("/book", createNewBook).Methods("POST")
+	myRouter.HandleFunc("/book", createNewMember).Methods("POST")
+	log.Fatal(http.ListenAndServe(":10000", myRouter))
+}
+
+func main() {
+
+	scanner := bufio.NewScanner(os.Stdin)
+	db, _ = badger.Open(badger.DefaultOptions("C:\\Users\\Sanjay\\OneDrive - Manipal Academy of Higher Education\\Documents\\GitHub\\Blockchain_Dev\\Task5-Library Management System(Persistent Version)\\tmp\\badger"))
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 	defer db.Close()
-	// To keep program running for multiple operations
+	//To keep program running for multiple operations
 	for {
-		fmt.Println("Enter 1.Enter Librarian Interface\n2.Enter User Interface\n3.Exit")
+		fmt.Println("Enter 1.Enter Librarian Interface\n2.Enter User Interface\n3.Enter API\n4.Exit")
 		var n int
 		fmt.Scanln(&n) // Option choice stored\
 		switch n {
@@ -192,8 +292,11 @@ func main() {
 			case 4: //exit clause for user portal
 				break
 			}
-		//exit clause to close application
+
 		case 3:
+			handleRequests()
+		//exit clause to close application
+		case 4:
 			for i := range lib.BooksBorrowed {
 				var bookBytes bytes.Buffer // Stand-in for the bookBytes.
 				// Create an encoder and send a value.
@@ -235,4 +338,5 @@ func main() {
 		}
 
 	}
+	//handleRequests()
 }

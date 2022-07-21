@@ -56,3 +56,11 @@ Sam
 7
 Hunger Games
 1
+//JSON
+{
+    "booktype":2,
+    "name":"Journey 150",
+    "author":"Samuel",
+    "capacity":5,
+    "borrowed":0
+}

@@ -19,11 +19,11 @@ type Book interface {
 
 //Book struct to hold digital and physical books
 type Books struct {
-	B_type   BookType
-	B_Name   string
-	B_Author string
-	Capacity int
-	Borrowed int
+	B_type   BookType `json:"booktype"`
+	B_Name   string   `json:"name"`
+	B_Author string   `json:"author"`
+	Capacity int      `json:"capacity"`
+	Borrowed int      `json:"borrowed"`
 }
 
 type BookType int
@@ -147,6 +147,37 @@ func checkBookValidity(bname string, lib *Library, member *Member, db *badger.DB
 		bfound = false
 	}
 	return bfound, bookFound
+}
+func checkBookValidityApi(bname string, lib *Library, db *badger.DB) bool {
+	fmt.Println(bname)
+	bfound := false //Denotes book validity
+	for i := range lib.BooksBorrowed {
+		if lib.BooksBorrowed[i].B_Name == bname {
+			bfound = true
+			return bfound
+		}
+	}
+	if err := db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchSize = 10
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			k := string(item.Key())
+			fmt.Println(k)
+			if k == bname {
+				bfound = true
+				break
+			}
+
+		}
+		return nil
+	}); err != nil {
+		fmt.Println("DB Reading Error on library module")
+	}
+
+	return bfound
 }
 
 //Prints details of the book

@@ -15,9 +15,15 @@ require (
 	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/flatbuffers v1.12.1 // indirect
+	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/spf13/cobra v0.0.5 // indirect
+	github.com/spf13/pflag v1.0.3 // indirect
 	go.opencensus.io v0.22.5 // indirect
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
+	google.golang.org/genproto v0.0.0-20190425155659-357c62f0e4bb // indirect
+	google.golang.org/grpc v1.20.1 // indirect
 )
