@@ -1,4 +1,4 @@
-package main
+package codeModules
 
 import (
 	"bytes"
@@ -81,7 +81,7 @@ func (b *Books) Return() {
 }
 
 //BookIndex() returns the position of the book to be removed from the member book slice
-func bookIndex(slice []Books, book Books) int {
+func BookIndex(slice []Books, book Books) int {
 	idx := -1
 	for i := range slice {
 		if slice[i].B_Name == book.B_Name {
@@ -92,8 +92,8 @@ func bookIndex(slice []Books, book Books) int {
 	return idx
 }
 
-//Checks if book is present in the library and user eligible to borrow
-func checkBookValidity(bname string, lib *Library, member *Member, db *badger.DB) (bool, *Books) {
+//CheckBookValidity Checks if book is present in the library and user eligible to borrow
+func CheckBookValidity(bname string, lib *Library, member *Member, db *badger.DB) (bool, *Books) {
 	bfound := false //Denotes book validity
 	borrowed := false
 	var bookFound *Books //Used to return book object that user wishes to borrow
@@ -104,45 +104,49 @@ func checkBookValidity(bname string, lib *Library, member *Member, db *badger.DB
 			return bfound, bookFound
 		}
 	}
-	if err := db.View(func(txn *badger.Txn) error {
-		opts := badger.DefaultIteratorOptions
-		opts.PrefetchSize = 10
-		it := txn.NewIterator(opts)
-		defer it.Close()
-		for it.Rewind(); it.Valid(); it.Next() {
-			item := it.Item()
-			k := string(item.Key())
-			if k == bname {
-				err := item.Value(func(v []byte) error {
-					// Create an encoder and send a value.
-					enc := gob.NewDecoder(bytes.NewBuffer(v))
-					err := enc.Decode(&bookFound)
-					if err != nil {
-						log.Fatal("Error in decoding user validity return:", err)
-					}
-
-					lib.BooksBorrowed = append(lib.BooksBorrowed, *bookFound)
-					for i := range lib.BooksBorrowed {
-						if lib.BooksBorrowed[i].B_Name == bname {
-							bookFound = &lib.BooksBorrowed[i]
-							bfound = true
+	//checks in db if not in cache memory
+	if !bfound {
+		if err := db.View(func(txn *badger.Txn) error {
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchSize = 10
+			it := txn.NewIterator(opts)
+			defer it.Close()
+			for it.Rewind(); it.Valid(); it.Next() {
+				item := it.Item()
+				k := string(item.Key())
+				if k == bname {
+					err := item.Value(func(v []byte) error {
+						// Create an encoder and send a value.
+						enc := gob.NewDecoder(bytes.NewBuffer(v))
+						err := enc.Decode(&bookFound)
+						if err != nil {
+							log.Fatal("Error in decoding user validity return:", err)
 						}
+
+						lib.BooksBorrowed = append(lib.BooksBorrowed, *bookFound)
+						for i := range lib.BooksBorrowed {
+							if lib.BooksBorrowed[i].B_Name == bname {
+								bookFound = &lib.BooksBorrowed[i]
+								bfound = true
+							}
+						}
+
+						return nil
+					})
+					if err != nil {
+						return err
 					}
-
-					return nil
-				})
-				if err != nil {
-					return err
+					bfound = true
+					break
 				}
-				bfound = true
-				break
-			}
 
+			}
+			return nil
+		}); err != nil {
+			fmt.Println("DB Reading Error on library module")
 		}
-		return nil
-	}); err != nil {
-		fmt.Println("DB Reading Error on library module")
 	}
+
 	if bfound { //used for out of index error handling
 		for i := range member.BooksBorrowed { // checks if user has borrowed book already
 			if member.BooksBorrowed[i].B_Name == bookFound.B_Name {
@@ -155,7 +159,9 @@ func checkBookValidity(bname string, lib *Library, member *Member, db *badger.DB
 	}
 	return bfound, bookFound
 }
-func checkBookValidityApi(bname string, lib *Library, db *badger.DB) bool {
+
+//CheckBookValidityApi checks if book searched for is valid and present in db
+func CheckBookValidityApi(bname string, lib *Library, db *badger.DB) bool {
 	fmt.Println(bname)
 	bfound := false //Denotes book validity
 	for i := range lib.BooksBorrowed {
@@ -188,7 +194,7 @@ func checkBookValidityApi(bname string, lib *Library, db *badger.DB) bool {
 }
 
 //Prints details of the book
-func printBookDetails(bookFound *Books) {
+func PrintBookDetails(bookFound *Books) {
 	fmt.Println("Details of the book: ")
 	fmt.Println("Book Type: " + bookFound.Booktype())
 	fmt.Println("Book Name: " + bookFound.Name())
@@ -197,7 +203,7 @@ func printBookDetails(bookFound *Books) {
 
 }
 
-//removeBookMember() removes a particular book from member's books slice
-func removeBookMember(slice []Books, s int) []Books {
+//RemoveBookMember() removes a particular book from member's books slice
+func RemoveBookMember(slice []Books, s int) []Books {
 	return append(slice[:s], slice[s+1:]...)
 }

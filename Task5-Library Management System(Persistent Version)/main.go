@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Task5-Library_Management_System/codeModules"
 	"bufio"
 	"fmt"
 	badger "github.com/dgraph-io/badger/v3"
@@ -8,7 +9,7 @@ import (
 	"os"
 )
 
-var lib Library
+var lib codeModules.Library
 var db *badger.DB
 
 func main() {
@@ -34,9 +35,9 @@ func main() {
 			switch n {
 			//Case 1 enters new book in library
 			case 1:
-				newBook := new(Books)
+				newBook := new(codeModules.Books)
 				//var typeBook string
-				var bookType BookType
+				var bookType codeModules.BookType
 				fmt.Println("Enter Book Type \n1.Ebook\n2. AudioBook\n3. HardBack\n4. PaperBack\n5. Encyclopedia\n6. Magazine\n7. Comic: ")
 				fmt.Scanln(&bookType) //Stores book type to identify digital or physical
 				bookType--            // Indexing of enum starts at 0
@@ -92,11 +93,11 @@ func main() {
 			fmt.Scanln(&n) //stores user choice
 			switch n {
 			case 1: //User registration portal
-				member := new(Member) //creates new member
+				member := new(codeModules.Member) //creates new member
 				fmt.Println("Enter name:")
 				scanner.Scan()
 				name := scanner.Text()
-				b := checkUserNameValidity(name, lib, db) // checks if username is valid
+				b := codeModules.CheckUserNameValidity(name, lib, db) // checks if username is valid
 				if !b {
 					fmt.Println("Username taken! Please Enter Full Name!")
 					continue
@@ -109,28 +110,28 @@ func main() {
 				lib.Members = append(lib.Members, *member)
 				log.Println(lib) //logs changes made to users
 			case 2: //Book borrowing portal
-				var verifiedMember *Member //used to obtain user details
-				var b bool                 //checks if username is valid
+				var verifiedMember *codeModules.Member //used to obtain user details
+				var b bool                             //checks if username is valid
 				fmt.Println("Enter your name: ")
 				scanner.Scan()
 				name := scanner.Text()
-				b, verifiedMember = checkUserValidity(name, &lib, db) //checks username validity and number of books that user has borrowed is below 5
-				if b {                                                //if user is valid and registered
+				b, verifiedMember = codeModules.CheckUserValidity(name, &lib, db) //checks username validity and number of books that user has borrowed is below 5
+				if b {                                                            //if user is valid and registered
 					fmt.Println("Identity verified")
-					var btype BookType
+					var btype codeModules.BookType
 					fmt.Println("Enter BookType: \n1.Ebook\n2. AudioBook\n3. HardBack\n4. PaperBack\n5. Encyclopedia\n6. Magazine\n7. Comic: ")
 					fmt.Scanln(&btype) //checks for book type in case of book being available in both digital and physical versions
 					fmt.Println("Enter Book name: ")
 					scanner.Scan()
-					bname := scanner.Text()                                                 //stores book name to be borrowed
-					bfound, bookFound := checkBookValidity(bname, &lib, verifiedMember, db) //checks if book is available then stores book pointed to bookFound
+					bname := scanner.Text()                                                             //stores book name to be borrowed
+					bfound, bookFound := codeModules.CheckBookValidity(bname, &lib, verifiedMember, db) //checks if book is available then stores book pointed to bookFound
 					if bfound {
 						if !bookFound.Borrow() { //Borrow() checks if book id available to borrow
 							fmt.Println("Book Unavailable")
 							continue
 						}
 						verifiedMember.BooksBorrowed = append(verifiedMember.BooksBorrowed, *bookFound)
-						printBookDetails(bookFound) //displays details of book borrowed
+						codeModules.PrintBookDetails(bookFound) //displays details of book borrowed
 					}
 					if !bfound { //in case book not present in struct
 						fmt.Println("Book Not found/User already borrowed 5 books/Requested book borrowed!!")
@@ -145,10 +146,10 @@ func main() {
 				fmt.Println("Enter your name: ")
 				scanner.Scan()
 				name := scanner.Text()
-				b, member := checkUserValidityReturn(name, &lib, db) //checks validity of user
+				b, member := codeModules.CheckUserValidityReturn(name, &lib, db) //checks validity of user
 				if b {
 					fmt.Println("Identity verified")
-					var btype BookType
+					var btype codeModules.BookType
 					fmt.Println("Enter BookType: \n1.Ebook\n2. AudioBook\n3. HardBack\n4. PaperBack\n5. Encyclopedia\n6. Magazine\n7. Comic: ")
 					fmt.Scanln(&btype)
 					fmt.Println("Enter Book name: ")
@@ -167,12 +168,12 @@ func main() {
 						}
 					}
 
-					bfound, bookFound := checkUserBookValidity(bname, lib, *member, db) //checks if book is available and borrowed then stores book pointed to bookFound
+					bfound, bookFound := codeModules.CheckUserBookValidity(bname, lib, *member, db) //checks if book is available and borrowed then stores book pointed to bookFound
 
 					if bfound {
-						bookFound.Return()                                                 //modifies book borrowed value
-						idx := bookIndex(member.BooksBorrowed, *bookFound)                 //obtains index of borrowed book in user struct
-						member.BooksBorrowed = removeBookMember(member.BooksBorrowed, idx) //removes returned book from user struct
+						bookFound.Return()                                                             //modifies book borrowed value
+						idx := codeModules.BookIndex(member.BooksBorrowed, *bookFound)                 //obtains index of borrowed book in user struct
+						member.BooksBorrowed = codeModules.RemoveBookMember(member.BooksBorrowed, idx) //removes returned book from user struct
 						fmt.Println(lib.Members[0])
 						fmt.Println(member)
 						fmt.Println("Book Returned")

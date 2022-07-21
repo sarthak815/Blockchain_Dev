@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Task5-Library_Management_System/codeModules"
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
@@ -24,11 +25,11 @@ func createNewBook(w http.ResponseWriter, r *http.Request) {
 	// unmarshal this into a new Article struct
 	// append this to our Articles array.
 	reqBody, _ := ioutil.ReadAll(r.Body)
-	var bookJson Books
+	var bookJson codeModules.Books
 	json.Unmarshal(reqBody, &bookJson)
 	// update our bookJSON variable to hold the object received over API
 	//checkBookValidityApi checks if the book received is valid to be stored to the db
-	b := checkBookValidityApi(bookJson.B_Name, &lib, db)
+	b := codeModules.CheckBookValidityApi(bookJson.B_Name, &lib, db)
 	if b {
 		log.Println("Book found in DB already")
 		return
@@ -52,10 +53,10 @@ func createNewMember(w http.ResponseWriter, r *http.Request) {
 	// get the body of our POST request
 	// unmarshal this into a new member struct
 	reqBody, _ := ioutil.ReadAll(r.Body)
-	var memberJson Member
+	var memberJson codeModules.Member
 	json.Unmarshal(reqBody, &memberJson)
 	//checkMemberValidityApi ensures that member is valid to be added to the DB
-	b := checkMemberValidityApi(memberJson.Name, &lib, db)
+	b := codeModules.CheckMemberValidityApi(memberJson.Name, &lib, db)
 	if b {
 		log.Println("Member found in DB already")
 		return
@@ -75,25 +76,25 @@ func borrowBook(w http.ResponseWriter, r *http.Request) {
 	// unmarshal this into a new Article struct
 	// append this to our Articles array.
 	reqBody, _ := ioutil.ReadAll(r.Body)
-	var borrower Borrower
+	var borrower codeModules.Borrower
 	json.Unmarshal(reqBody, &borrower)
 	name := borrower.Name
 	fmt.Println("Name:" + name)
 	// update our global Articles array to include
 	// our new Article
-	b, verifiedMember := checkUserValidity(name, &lib, db) //checks username validity and number of books that user has borrowed is below 5
-	if b {                                                 //if user is valid and registered
+	b, verifiedMember := codeModules.CheckUserValidity(name, &lib, db) //checks username validity and number of books that user has borrowed is below 5
+	if b {                                                             //if user is valid and registered
 		fmt.Println("Identity verified")
 		bname := borrower.BookN //stores book name to be borrowed
 
-		bfound, bookFound := checkBookValidity(bname, &lib, verifiedMember, db) //checks if book is available then stores book pointed to bookFound
+		bfound, bookFound := codeModules.CheckBookValidity(bname, &lib, verifiedMember, db) //checks if book is available then stores book pointed to bookFound
 		if bfound {
 			if !bookFound.Borrow() { //Borrow() checks if book id available to borrow
 				fmt.Println("Book Unavailable")
 				return
 			}
 			verifiedMember.BooksBorrowed = append(verifiedMember.BooksBorrowed, *bookFound)
-			printBookDetails(bookFound) //displays details of book borrowed
+			codeModules.PrintBookDetails(bookFound) //displays details of book borrowed
 		}
 		if !bfound { //in case book not present in struct
 			fmt.Println("Book Not found/User already borrowed 5 books/Requested book borrowed!!")
@@ -115,18 +116,18 @@ func returnBook(w http.ResponseWriter, r *http.Request) {
 	// unmarshal this into a new Article struct
 	// append this to our Articles array.
 	reqBody, _ := ioutil.ReadAll(r.Body)
-	var borrower Borrower
+	var borrower codeModules.Borrower
 	json.Unmarshal(reqBody, &borrower)
 	name := borrower.Name
 	fmt.Println("Name:" + name)
-	b, member := checkUserValidityReturn(name, &lib, db) //checks validity of user
+	b, member := codeModules.CheckUserValidityReturn(name, &lib, db) //checks validity of user
 	if b {
 		fmt.Println("Identity verified")
-		bfound, bookFound := checkUserBookValidity(borrower.BookN, lib, *member, db) //checks if book is available and borrowed then stores book pointed to bookFound
+		bfound, bookFound := codeModules.CheckUserBookValidity(borrower.BookN, lib, *member, db) //checks if book is available and borrowed then stores book pointed to bookFound
 		if bfound {
-			bookFound.Return()                                                 //modifies book borrowed value
-			idx := bookIndex(member.BooksBorrowed, *bookFound)                 //obtains index of borrowed book in user struct
-			member.BooksBorrowed = removeBookMember(member.BooksBorrowed, idx) //removes returned book from user struct
+			bookFound.Return()                                                             //modifies book borrowed value
+			idx := codeModules.BookIndex(member.BooksBorrowed, *bookFound)                 //obtains index of borrowed book in user struct
+			member.BooksBorrowed = codeModules.RemoveBookMember(member.BooksBorrowed, idx) //removes returned book from user struct
 			fmt.Println("Book Returned")
 			log.Println(lib)
 		}
@@ -189,6 +190,7 @@ func writeMembersToDB() {
 
 //handleRequests contains all the functions necessary for handling API calls using gorilla mux
 func handleRequests() {
+	//creates a gorilla mux to handle different paths to access variety ogf functions
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", homePage)
 	myRouter.HandleFunc("/book", createNewBook).Methods("POST")

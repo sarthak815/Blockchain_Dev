@@ -1,4 +1,4 @@
-package main
+package codeModules
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ type Library struct {
 }
 
 //Checks if the user wishing to borrow is registered and eligible
-func checkUserValidity(name string, lib *Library, db *badger.DB) (bool, *Member) {
+func CheckUserValidity(name string, lib *Library, db *badger.DB) (bool, *Member) {
 	b := false         //Denotes user validity
 	var member *Member //Used to return member object of user that wishes to borrow or return
 	for i := range lib.Members {
@@ -76,7 +76,7 @@ func checkUserValidity(name string, lib *Library, db *badger.DB) (bool, *Member)
 }
 
 //Checks if the user wishing to return is eligible
-func checkUserValidityReturn(name string, lib *Library, db *badger.DB) (bool, *Member) {
+func CheckUserValidityReturn(name string, lib *Library, db *badger.DB) (bool, *Member) {
 	b := false         //Denotes user validity
 	var member *Member //Used to return member object of user that wishes to borrow or return
 	for i := range lib.Members {
@@ -128,7 +128,7 @@ func checkUserValidityReturn(name string, lib *Library, db *badger.DB) (bool, *M
 }
 
 //checks if username is unique as it acts as primary key
-func checkUserNameValidity(username string, lib Library, db *badger.DB) bool {
+func CheckUserNameValidity(username string, lib Library, db *badger.DB) bool {
 	b := true
 	for i := range lib.Members {
 		if username == lib.Members[i].Name {
@@ -159,7 +159,7 @@ func checkUserNameValidity(username string, lib Library, db *badger.DB) bool {
 }
 
 //checks if book borrowed and present in directory
-func checkUserBookValidity(bname string, lib Library, member Member, db *badger.DB) (bool, *Books) {
+func CheckUserBookValidity(bname string, lib Library, member Member, db *badger.DB) (bool, *Books) {
 	bfound := false //Denotes book validity
 	borrowed := false
 	var bookFound *Books //Used to return book object that user wishes to borrow or return

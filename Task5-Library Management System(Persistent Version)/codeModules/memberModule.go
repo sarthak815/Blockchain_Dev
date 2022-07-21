@@ -1,4 +1,4 @@
-package main
+package codeModules
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ func (member *Member) Init(name string, age int) {
 	member.Age = age
 
 }
-func checkMemberValidityApi(mname string, lib *Library, db *badger.DB) bool {
+func CheckMemberValidityApi(mname string, lib *Library, db *badger.DB) bool {
 	fmt.Println(mname)
 	bfound := false //Denotes book validity
 	for i := range lib.Members {
