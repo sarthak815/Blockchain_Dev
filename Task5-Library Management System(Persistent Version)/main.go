@@ -73,7 +73,7 @@ func main() {
 						fmt.Scanln(&capacity)
 					}
 
-					newBook.Init(bookType, name+"Digital", author, capacity) //Creating digital copy
+					newBook.Init(bookType, name, author, capacity) //Creating digital copy
 					log.Println(newBook)
 					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
 				}
@@ -121,8 +121,7 @@ func main() {
 					fmt.Scanln(&btype) //checks for book type in case of book being available in both digital and physical versions
 					fmt.Println("Enter Book name: ")
 					scanner.Scan()
-					bname := scanner.Text() //stores book name to be borrowed
-
+					bname := scanner.Text()                                                 //stores book name to be borrowed
 					bfound, bookFound := checkBookValidity(bname, &lib, verifiedMember, db) //checks if book is available then stores book pointed to bookFound
 					if bfound {
 						if !bookFound.Borrow() { //Borrow() checks if book id available to borrow
@@ -188,7 +187,6 @@ func main() {
 			case 4: //exit clause for user portal
 				break
 			}
-
 		case 3:
 			handleRequests()
 		//exit clause to close application

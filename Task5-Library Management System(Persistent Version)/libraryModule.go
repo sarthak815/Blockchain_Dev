@@ -22,52 +22,56 @@ func checkUserValidity(name string, lib *Library, db *badger.DB) (bool, *Member)
 		if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
 			member = &lib.Members[i]
 			b = true
+			if len(member.BooksBorrowed) >= 5 {
+				b = false
+			}
 			return b, member
 		}
 	}
-	if err := db.View(func(txn *badger.Txn) error {
-		opts := badger.DefaultIteratorOptions
-		opts.PrefetchSize = 10
-		it := txn.NewIterator(opts)
-		defer it.Close()
-		for it.Rewind(); it.Valid(); it.Next() {
-			item := it.Item()
-			k := string(item.Key())
-			if k == name {
-				err := item.Value(func(v []byte) error {
-					// Create an encoder and send a value.
-					enc := gob.NewDecoder(bytes.NewBuffer(v))
-					err := enc.Decode(&member)
+	if !b {
+		if err := db.View(func(txn *badger.Txn) error {
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchSize = 10
+			it := txn.NewIterator(opts)
+			defer it.Close()
+			for it.Rewind(); it.Valid(); it.Next() {
+				item := it.Item()
+				k := string(item.Key())
+				if k == name {
+					err := item.Value(func(v []byte) error {
+						// Create an encoder and send a value.
+						enc := gob.NewDecoder(bytes.NewBuffer(v))
+						err := enc.Decode(&member)
 
-					if err != nil {
-						log.Fatal("Error in decoding user validity:", err)
-					}
-					lib.Members = append(lib.Members, *member)
-					for i := range lib.Members {
-						if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
-							member = &lib.Members[i]
-							b = true
-							break
+						if err != nil {
+							log.Fatal("Error in decoding user validity:", err)
 						}
+						lib.Members = append(lib.Members, *member)
+						for i := range lib.Members {
+							if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
+								member = &lib.Members[i]
+								b = true
+								if len(member.BooksBorrowed) >= 5 {
+									b = false
+								}
+								break
+							}
+						}
+						return nil
+					})
+					if err != nil {
+						return err
 					}
-					return nil
-				})
-				if err != nil {
-					return err
+
 				}
 
 			}
+			return nil
+		}); err != nil {
+			fmt.Println("DB Reading Error on library module")
+		}
+	}
 
-		}
-		return nil
-	}); err != nil {
-		fmt.Println("DB Reading Error on library module")
-	}
-	if b { //used for out of index error handling
-		if len(member.BooksBorrowed) >= 5 {
-			b = false
-		}
-	}
 	return b, member
 }
 

@@ -5,6 +5,7 @@
 7
 Hunger Games
 Suzanne Collins
+1
 5
 1
 1
@@ -28,7 +29,19 @@ Shel Silverstein
 6
 Forbes
 Forbes Organisation
+1
 100
+1
+1
+3
+The Siege
+Helen Dunmore
+1
+1
+7
+Bad Blood
+Lorna Sage
+2
 //Inserting 3 users
 2
 1
@@ -57,6 +70,7 @@ Sam
 Hunger Games
 1
 //JSON
+//Insert Book
 {
     "booktype":2,
     "name":"Journey 150",
@@ -64,11 +78,13 @@ Hunger Games
     "capacity":5,
     "borrowed":0
 }
+//insert user
 {
     "name":"Samuel",
     "age":12,
     "books":[]
 }
+//borrow or return
 {
     "name":"Tim",
     "type":3,
