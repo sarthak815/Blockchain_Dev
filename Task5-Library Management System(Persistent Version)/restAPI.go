@@ -12,10 +12,13 @@ import (
 	"net/http"
 )
 
+//homePage sets the text to be displayed on the localhost page
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the HomePage!")
 	fmt.Println("Endpoint Hit: homePage")
 }
+
+//createNewBook creates a new book object and stores it to the database
 func createNewBook(w http.ResponseWriter, r *http.Request) {
 	// get the body of our POST request
 	// unmarshal this into a new Article struct
@@ -23,45 +26,50 @@ func createNewBook(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var bookJson Books
 	json.Unmarshal(reqBody, &bookJson)
-	// update our global Articles array to include
-	// our new Article
+	// update our bookJSON variable to hold the object received over API
+	//checkBookValidityApi checks if the book received is valid to be stored to the db
 	b := checkBookValidityApi(bookJson.B_Name, &lib, db)
 	if b {
 		log.Println("Book found in DB already")
 		return
 	}
 	fmt.Println(bookJson)
-	//Indicates book to be of Physical type
+	//In case book is of physical type ensures only one copy is present
 	if bookJson.B_type > 1 && bookJson.B_type <= 3 {
 		bookJson.Capacity = 1
 
 	}
 	lib.BooksBorrowed = append(lib.BooksBorrowed, bookJson)
 	fmt.Println(lib)
+	//writeBooksToDB stores the newly added book to the database
 	writeBooksToDB()
+	//returns the json object as received to the api
 	json.NewEncoder(w).Encode(bookJson)
 }
+
+//createNewMember creates a new member object and stores it to the database
 func createNewMember(w http.ResponseWriter, r *http.Request) {
 	// get the body of our POST request
-	// unmarshal this into a new Article struct
-	// append this to our Articles array.
+	// unmarshal this into a new member struct
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var memberJson Member
 	json.Unmarshal(reqBody, &memberJson)
-	// update our global Articles array to include
-	// our new Article
+	//checkMemberValidityApi ensures that member is valid to be added to the DB
 	b := checkMemberValidityApi(memberJson.Name, &lib, db)
 	if b {
 		log.Println("Member found in DB already")
 		return
 	}
 	fmt.Println(memberJson)
-
+	//If valid the new member is appended to the lib struct
 	lib.Members = append(lib.Members, memberJson)
 	fmt.Println(lib)
+	//writeMembersToDB writes the newly added member to the BadgerDB
 	writeMembersToDB()
 	json.NewEncoder(w).Encode(memberJson)
 }
+
+//borrowBook takes json input of type Books and allows an user to borrow a book while performing necessary checks
 func borrowBook(w http.ResponseWriter, r *http.Request) {
 	// get the body of our POST request
 	// unmarshal this into a new Article struct
@@ -100,6 +108,8 @@ func borrowBook(w http.ResponseWriter, r *http.Request) {
 	writeMembersToDB()
 	json.NewEncoder(w).Encode(borrower)
 }
+
+//returnBook takes json input of type Borrower and allows an user to return a borrowed book
 func returnBook(w http.ResponseWriter, r *http.Request) {
 	// get the body of our POST request
 	// unmarshal this into a new Article struct
@@ -131,6 +141,8 @@ func returnBook(w http.ResponseWriter, r *http.Request) {
 	writeMembersToDB()
 	json.NewEncoder(w).Encode(borrower)
 }
+
+//writeBooksToDB saves all books data in Library struct to BadgerDB
 func writeBooksToDB() {
 	for i := range lib.BooksBorrowed {
 		var bookBytes bytes.Buffer // Stand-in for the bookBytes.
@@ -150,6 +162,8 @@ func writeBooksToDB() {
 		fmt.Println("Inserted books")
 	}
 }
+
+//writeMembersToDB saves all members data in Library struct to BadgerDB
 func writeMembersToDB() {
 	for i := range lib.Members {
 		var memberBytes bytes.Buffer // Stand-in for the memberBytes.
@@ -172,6 +186,8 @@ func writeMembersToDB() {
 		fmt.Println("Inserted Members")
 	}
 }
+
+//handleRequests contains all the functions necessary for handling API calls using gorilla mux
 func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", homePage)

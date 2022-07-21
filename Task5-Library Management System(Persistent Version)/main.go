@@ -14,16 +14,17 @@ var db *badger.DB
 func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
-	db, _ = badger.Open(badger.DefaultOptions("C:\\Users\\Sanjay\\OneDrive - Manipal Academy of Higher Education\\Documents\\GitHub\\Blockchain_Dev\\Task5-Library Management System(Persistent Version)\\tmp\\badger"))
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+	var err error
+	db, err = badger.Open(badger.DefaultOptions("C:\\Users\\Sanjay\\OneDrive - Manipal Academy of Higher Education\\Documents\\GitHub\\Blockchain_Dev\\Task5-Library Management System(Persistent Version)\\tmp\\badger"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer db.Close()
 	//To keep program running for multiple operations
 	for {
 		fmt.Println("Enter 1.Enter Librarian Interface\n2.Enter User Interface\n3.Enter API\n4.Exit")
 		var n int
-		fmt.Scanln(&n) // Option choice stored\
+		fmt.Scanln(&n) // Option choice stored
 		switch n {
 		// Enter Library Management System
 		case 1:
@@ -187,10 +188,12 @@ func main() {
 			case 4: //exit clause for user portal
 				break
 			}
+		//Sets the program to begin accepting api calls on localhost:10000
 		case 3:
 			handleRequests()
 		//exit clause to close application
 		case 4:
+			//writes all data into library struct before exiting the program
 			writeBooksToDB()
 			writeMembersToDB()
 			os.Exit(0)
