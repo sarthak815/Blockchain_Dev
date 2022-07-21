@@ -12,6 +12,12 @@ type Member struct {
 	BooksBorrowed []Books `json:"books"`
 }
 
+type Borrower struct {
+	Name  string   `json:"name"`
+	BookT BookType `json:"type"`
+	BookN string   `json:"bookname"`
+}
+
 //*********************STRUCT CONSTRUCTORS*********************
 //Constructor initialising member struct
 func (member *Member) Init(name string, age int) {
