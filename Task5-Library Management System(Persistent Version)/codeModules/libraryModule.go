@@ -10,14 +10,17 @@ import (
 
 //Library structure
 type Library struct {
-	BooksBorrowed []Books
-	Members       []Member
+	//BooksAvailable stores all the books entered in the application
+	BooksAvailable []Books
+	//Members stores all member details entered in the application
+	Members []Member
 }
 
 //Checks if the user wishing to borrow is registered and eligible
 func CheckUserValidity(name string, lib *Library, db *badger.DB) (bool, *Member) {
 	b := false         //Denotes user validity
 	var member *Member //Used to return member object of user that wishes to borrow or return
+	//checks for the user in libraru cache
 	for i := range lib.Members {
 		if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
 			member = &lib.Members[i]
@@ -28,6 +31,7 @@ func CheckUserValidity(name string, lib *Library, db *badger.DB) (bool, *Member)
 			return b, member
 		}
 	}
+	//in case not found in cache searches in badgerDB
 	if !b {
 		if err := db.View(func(txn *badger.Txn) error {
 			opts := badger.DefaultIteratorOptions
@@ -46,7 +50,9 @@ func CheckUserValidity(name string, lib *Library, db *badger.DB) (bool, *Member)
 						if err != nil {
 							log.Fatal("Error in decoding user validity:", err)
 						}
+						//adds user to cache if found in db
 						lib.Members = append(lib.Members, *member)
+						//obtains memory address of member stored in cache
 						for i := range lib.Members {
 							if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
 								member = &lib.Members[i]
@@ -79,6 +85,7 @@ func CheckUserValidity(name string, lib *Library, db *badger.DB) (bool, *Member)
 func CheckUserValidityReturn(name string, lib *Library, db *badger.DB) (bool, *Member) {
 	b := false         //Denotes user validity
 	var member *Member //Used to return member object of user that wishes to borrow or return
+	//checks for user object in cache memory
 	for i := range lib.Members {
 		if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
 			member = &lib.Members[i]
@@ -87,6 +94,7 @@ func CheckUserValidityReturn(name string, lib *Library, db *badger.DB) (bool, *M
 
 		}
 	}
+	//checks in db if user data is not in cache
 	if err := db.View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
@@ -104,6 +112,7 @@ func CheckUserValidityReturn(name string, lib *Library, db *badger.DB) (bool, *M
 						log.Fatal("Error in decoding user validity return:", err)
 					}
 					lib.Members = append(lib.Members, *member)
+					//searches for the address to the member in library after it has been fetched from the db
 					for i := range lib.Members {
 						if lib.Members[i].Name == name { // checks validity by name, uses name as primary key
 							member = &lib.Members[i]
@@ -130,29 +139,33 @@ func CheckUserValidityReturn(name string, lib *Library, db *badger.DB) (bool, *M
 //checks if username is unique as it acts as primary key
 func CheckUserNameValidity(username string, lib Library, db *badger.DB) bool {
 	b := true
+	//searches for user presence in the cache memory
 	for i := range lib.Members {
 		if username == lib.Members[i].Name {
 			b = false
 			break
 		}
 	}
-	if err := db.View(func(txn *badger.Txn) error {
-		opts := badger.DefaultIteratorOptions
-		opts.PrefetchSize = 10
-		it := txn.NewIterator(opts)
-		defer it.Close()
-		for it.Rewind(); it.Valid(); it.Next() {
-			item := it.Item()
-			k := string(item.Key())
-			if k == username {
-				b = false
-				break
-			}
+	//if user is not found in cache it looks fo it in the db
+	if b {
+		if err := db.View(func(txn *badger.Txn) error {
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchSize = 10
+			it := txn.NewIterator(opts)
+			defer it.Close()
+			for it.Rewind(); it.Valid(); it.Next() {
+				item := it.Item()
+				k := string(item.Key())
+				if k == username {
+					b = false
+					break
+				}
 
+			}
+			return nil
+		}); err != nil {
+			fmt.Println("DB Reading Error on library module")
 		}
-		return nil
-	}); err != nil {
-		fmt.Println("DB Reading Error on library module")
 	}
 
 	return b
@@ -160,16 +173,19 @@ func CheckUserNameValidity(username string, lib Library, db *badger.DB) bool {
 
 //checks if book borrowed and present in directory
 func CheckUserBookValidity(bname string, lib Library, member Member, db *badger.DB) (bool, *Books) {
-	bfound := false //Denotes book validity
+	bfound := false //Denotes book availability
 	borrowed := false
 	var bookFound *Books //Used to return book object that user wishes to borrow or return
-	for i := range lib.BooksBorrowed {
-		if lib.BooksBorrowed[i].B_Name == bname {
-			bookFound = &lib.BooksBorrowed[i]
+	//searches for the book in cache memory
+	for i := range lib.BooksAvailable {
+		if lib.BooksAvailable[i].B_Name == bname {
+			bookFound = &lib.BooksAvailable[i]
 			bfound = true
 			return bfound, bookFound
 		}
 	}
+	//checks in db if book is not found in the cache memory
+	//uses a readonly db function of badgerDB
 	if err := db.View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
@@ -181,16 +197,17 @@ func CheckUserBookValidity(bname string, lib Library, member Member, db *badger.
 			if k == bname {
 				err := item.Value(func(v []byte) error {
 
-					// Create an encoder and send a value.
+					// Create an decoder to decode the received value from the db
 					enc := gob.NewDecoder(bytes.NewBuffer(v))
 					err := enc.Decode(&bookFound)
 					if err != nil {
 						log.Fatal("Error in decoding user validity return:", err)
 					}
-					lib.BooksBorrowed = append(lib.BooksBorrowed, *bookFound)
-					for i := range lib.BooksBorrowed {
-						if lib.BooksBorrowed[i].B_Name == bname {
-							bookFound = &lib.BooksBorrowed[i]
+					lib.BooksAvailable = append(lib.BooksAvailable, *bookFound)
+					//obtains address to the book in cache memory
+					for i := range lib.BooksAvailable {
+						if lib.BooksAvailable[i].B_Name == bname {
+							bookFound = &lib.BooksAvailable[i]
 
 						}
 					}
@@ -208,14 +225,17 @@ func CheckUserBookValidity(bname string, lib Library, member Member, db *badger.
 	}); err != nil {
 		fmt.Println("DB Reading Error on library module")
 	}
-	if bfound { //used for out of index error handling
-		for i := range member.BooksBorrowed { // checks if user has borrowed same book
+	//used for out of index error handling
+	if bfound {
+		// checks if user has borrowed same book
+		for i := range member.BooksBorrowed {
 			if member.BooksBorrowed[i].B_Name == bookFound.B_Name {
 				borrowed = true
 			}
 		}
 	}
-	if !borrowed { //incase book not borrowed by user
+	//sets book status to false in case the user has not borrowed the book
+	if !borrowed {
 		bfound = false
 	}
 	return bfound, bookFound

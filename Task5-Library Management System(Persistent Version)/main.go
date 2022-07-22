@@ -53,15 +53,13 @@ func main() {
 					fmt.Println("Enter borrowing limit: ") //Total copies available to borrow for digital
 					fmt.Scanln(&capacity)
 					newBook.Init(bookType, name, author, capacity)
-					log.Println(newBook) //
-					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
+					lib.BooksAvailable = append(lib.BooksAvailable, *newBook)
 
 				}
 				//Indicates book to be of Physical type
 				if bookType > 1 && bookType <= 3 {
 					newBook.Init(bookType, name, author, 1) // capaccity set to 1 as physical copy can only be 1 piece
-					log.Println(newBook)
-					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
+					lib.BooksAvailable = append(lib.BooksAvailable, *newBook)
 
 				}
 				//Indicates book to be of Physical and Digital
@@ -76,10 +74,9 @@ func main() {
 					}
 
 					newBook.Init(bookType, name, author, capacity) //Creating digital copy
-					log.Println(newBook)
-					lib.BooksBorrowed = append(lib.BooksBorrowed, *newBook)
+
+					lib.BooksAvailable = append(lib.BooksAvailable, *newBook)
 				}
-				log.Println(lib) //logs changes made to library struct
 
 			// exit clause to quit library management interface
 			case 2:
@@ -108,7 +105,7 @@ func main() {
 				member.Init(name, age)
 
 				lib.Members = append(lib.Members, *member)
-				log.Println(lib) //logs changes made to users
+
 			case 2: //Book borrowing portal
 				var verifiedMember *codeModules.Member //used to obtain user details
 				var b bool                             //checks if username is valid
@@ -140,7 +137,7 @@ func main() {
 				} else { //in case user details not present in struct
 					fmt.Println("Details not found or Already reached limit!")
 				}
-				fmt.Println(lib)
+
 			case 3: //Portal for user to return book
 
 				fmt.Println("Enter your name: ")
@@ -155,29 +152,13 @@ func main() {
 					fmt.Println("Enter Book name: ")
 					scanner.Scan()
 					bname := scanner.Text()
-					var digPhy int
-					if btype > 4 { //modifies book name in case of type where physical and digital copy is available
-
-						fmt.Println("Enter Copy Type:\n1.Digital\n2.Physical")
-						fmt.Scanln(&digPhy)
-						if digPhy == 1 {
-							bname += "Digital"
-						}
-						if digPhy > 1 || digPhy < 1 {
-							bname += "Physical"
-						}
-					}
-
 					bfound, bookFound := codeModules.CheckUserBookValidity(bname, lib, *member, db) //checks if book is available and borrowed then stores book pointed to bookFound
 
 					if bfound {
 						bookFound.Return()                                                             //modifies book borrowed value
 						idx := codeModules.BookIndex(member.BooksBorrowed, *bookFound)                 //obtains index of borrowed book in user struct
 						member.BooksBorrowed = codeModules.RemoveBookMember(member.BooksBorrowed, idx) //removes returned book from user struct
-						fmt.Println(lib.Members[0])
-						fmt.Println(member)
 						fmt.Println("Book Returned")
-						log.Println(lib)
 					}
 					if !bfound { //in case book not found in directory
 						fmt.Println("Book Not found or not borrowed!!")

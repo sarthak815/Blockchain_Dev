@@ -42,7 +42,7 @@ Application Features:
 - File can be downloaded and run using go by running the main package.
 - Application will enter API mode on pressing 3 from main menu.
 - API endpoints are available on port:10000
-- Sample input provided in input.txt file to enter 7 books into the system
+- Sample input provided in input.txt file to enter 7 books, 3 users and 1 borrow and 1 return into the system
 
 ### REST API JSON data formats:
 #### ``1.BookType Enum``
@@ -159,5 +159,5 @@ Created by [@sarthak815](https://www.github.com/sarthak815) - feel free to conta
 
 
 ## License
- This project is open source and available under the [MIT License](). 
+ This project is open source and available under the [MIT License](https://raw.githubusercontent.com/sarthak815/Library-Management-System/main/LICENSE). 
 

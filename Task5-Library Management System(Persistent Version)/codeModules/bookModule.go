@@ -17,7 +17,7 @@ type Book interface {
 	Return()      //returns a particular book
 }
 
-//Book struct to hold digital and physical books
+//Book struct and JSON object to hold digital and physical books
 type Books struct {
 	B_type   BookType `json:"booktype"`
 	B_Name   string   `json:"name"`
@@ -97,9 +97,10 @@ func CheckBookValidity(bname string, lib *Library, member *Member, db *badger.DB
 	bfound := false //Denotes book validity
 	borrowed := false
 	var bookFound *Books //Used to return book object that user wishes to borrow
-	for i := range lib.BooksBorrowed {
-		if lib.BooksBorrowed[i].B_Name == bname {
-			bookFound = &lib.BooksBorrowed[i]
+	//checks if book is present in cache memory
+	for i := range lib.BooksAvailable {
+		if lib.BooksAvailable[i].B_Name == bname {
+			bookFound = &lib.BooksAvailable[i]
 			bfound = true
 			return bfound, bookFound
 		}
@@ -122,11 +123,11 @@ func CheckBookValidity(bname string, lib *Library, member *Member, db *badger.DB
 						if err != nil {
 							log.Fatal("Error in decoding user validity return:", err)
 						}
-
-						lib.BooksBorrowed = append(lib.BooksBorrowed, *bookFound)
-						for i := range lib.BooksBorrowed {
-							if lib.BooksBorrowed[i].B_Name == bname {
-								bookFound = &lib.BooksBorrowed[i]
+						lib.BooksAvailable = append(lib.BooksAvailable, *bookFound)
+						//obtains the memory address of the bookfound in db
+						for i := range lib.BooksAvailable {
+							if lib.BooksAvailable[i].B_Name == bname {
+								bookFound = &lib.BooksAvailable[i]
 								bfound = true
 							}
 						}
@@ -154,6 +155,7 @@ func CheckBookValidity(bname string, lib *Library, member *Member, db *badger.DB
 			}
 		}
 	}
+	//In case book has already been borrowed by the user it rejects user's command to borrow the book
 	if borrowed {
 		bfound = false
 	}
@@ -164,12 +166,14 @@ func CheckBookValidity(bname string, lib *Library, member *Member, db *badger.DB
 func CheckBookValidityApi(bname string, lib *Library, db *badger.DB) bool {
 	fmt.Println(bname)
 	bfound := false //Denotes book validity
-	for i := range lib.BooksBorrowed {
-		if lib.BooksBorrowed[i].B_Name == bname {
+	//checks for the book name received in cache memory
+	for i := range lib.BooksAvailable {
+		if lib.BooksAvailable[i].B_Name == bname {
 			bfound = true
 			return bfound
 		}
 	}
+	//In case not found in cache it verifies with DB
 	if err := db.View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
