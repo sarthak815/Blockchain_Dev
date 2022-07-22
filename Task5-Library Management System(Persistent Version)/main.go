@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Task5-Library_Management_System/codeModules"
+	"Task5-Library_Management_System/codeModules" //Importing all the code modules
 	"bufio"
 	"fmt"
 	badger "github.com/dgraph-io/badger/v3"

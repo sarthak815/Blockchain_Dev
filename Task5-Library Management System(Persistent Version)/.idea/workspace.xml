@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ea84c1a2-b6d6-42bc-9777-ea56c21bd61f" name="Changes" comment="" />
+    <list default="true" id="ea84c1a2-b6d6-42bc-9777-ea56c21bd61f" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/Readme.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -40,7 +44,8 @@
     "WebServerToolWindowFactoryState": "false",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
-    "last_opened_file_path": "C:/Users/Sanjay/OneDrive - Manipal Academy of Higher Education/Documents/GitHub/Blockchain_Dev/Task5-Library Management System(Persistent Version)"
+    "last_opened_file_path": "C:/Users/Sanjay/OneDrive - Manipal Academy of Higher Education/Documents/GitHub/Blockchain_Dev/Task5-Library Management System(Persistent Version)",
+    "nodejs_package_manager_path": "npm"
   }
 }]]></component>
   <component name="RunManager">

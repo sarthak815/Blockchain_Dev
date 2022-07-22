@@ -1,1 +1,149 @@
+# Library Management System
+
+## Table of Contents
+* [General Info](#general-information)
+* [Technologies Used](#technologies-used)
+* [Features](#features)
+
+* [Usage](#usage)
+* [Room for Improvement](#room-for-improvement)
+* [Acknowledgements](#acknowledgements)
+* [Contact](#contact)
+<!-- * [License](#license) -->
+
+
+## General Information
+- Library Management System built using GOLang
+- Data stored in DB in encoded format using GOB encoding
+- Persistent application using BadgerDB
+- Rest API implemented to accept JSON inputs
+- Month 1- Final Project during SDE Internship at Sarva.ai
+<!-- You don't have to answer all the questions - just the ones relevant to your project. -->
+
+
+## Technologies Used
+- GOLang - version 1.18.3 amd64
+- BadgerDB - version v3.2103.2
+- Gorilla Mux - version 1.8.0
+
+
+## Features
+List the ready features here:
+- Awesome feature 1
+- Awesome feature 2
+- Awesome feature 3
+
+
+
+
+## Usage
+Application Features:
+- File can be downloaded and run using go by running the main package.
+- Application will enter API mode on pressing 3 from main menu.
+- Sample input provided in input.txt file to enter 7 books into the system
+
+### REST API JSON data formats:
+#### ``1.Book``
+The object requires booktype, name, author and capacity in respective fields.
+```
+{
+    "booktype":<int>(between 0 to 6),
+    "name":<str>,
+    "author":<str>,
+    "capacity":<int>(To set >1 type must be digital),
+    "borrowed":0
+}
+```
+#### ``2.Member``
+The object requires name and age in respective fields.
+```
+{
+    "name":<str>,
+    "age":<int>,
+    "books":[]
+}
+```
+#### ``3.Borrow/Return``
+The object requires name, type(booktype) and bookname in respective fields.
+```
+{
+    "name":<str>,
+    "type":<int>(between 0 to 6),
+    "bookname":<str>
+}
+```
+### REST API end points:
+The application has 4 API end points
+#### **1. Add Book**
+This functionality is available at the */book* endpoint of the application URL.
+- Accepts only **POST** requests.
+- Request JSON must follow the following format
+    ```
+    {
+    "booktype":<int>(between 0 to 6),
+    "name":<str>,
+    "author":<str>,
+    "capacity":<int>(To set >1 type must be digital),
+    "borrowed":0
+    }
+    ```
+The application returns any error or problem at server side while also returning the received json object to verify input.
+#### **2. Register User**
+This functionality is available at the */user* endpoint of the application URL.
+- Accepts only **POST** requests.
+- Request JSON must follow the following format
+    ```
+    {
+    "name":<str>,
+    "age":<int>,
+    "books":[]
+    }
+    ```
+  
+The application returns any error or problem at server side while also returning the received json object to verify input.
+#### **3. Borrow Book**
+This functionality is available at the */borrow* endpoint of the application URL.
+- Accepts only **POST** requests.
+- Request JSON must follow the following format
+    ```
+    {
+    "name":<str>,
+    "type":<int>(between 0 to 6),
+    "bookname":<str>
+    }
+    ```
+The application returns any error or problem at server side while also returning the received json object to verify input.
+#### **4. Return Book**
+This functionality is available at the */return* endpoint of the application URL.
+- Accepts only **POST** requests.
+- Request JSON must follow the following format
+    ```
+    {
+    "name":<str>,
+    "type":<int>(between 0 to 6),
+    "bookname":<str>
+    }
+    ```
+The application returns any error or problem at server side while also returning the received json object to verify input.
+## Room for Improvement
+Room for improvement:
+- Errors from caused by API endpoints returned to client
+- Improvement in efficiency using concurrent methods
+- Improved read-write operations to reduce redundant operations when using API end points
+
+
+## Acknowledgements
+
+- This reademe file was based on [this template](https://github.com/ritaly/README-cheatsheet/blob/master/README.md)
+- The REST API with MUX implementation was inspired by [this tutorial](https://semaphoreci.com/community/tutorials/building-and-testing-a-rest-api-in-go-with-gorilla-mux-and-postgresql).
+
+
+
+## Contact
+Created by [@sarthak815](https://www.github.com/sarthak815) - feel free to contact me!
+
+
+
+## License
+ This project is open source and available under the [MIT License](). 
 
