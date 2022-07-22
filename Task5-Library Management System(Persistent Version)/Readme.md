@@ -9,7 +9,7 @@
 * [Room for Improvement](#room-for-improvement)
 * [Acknowledgements](#acknowledgements)
 * [Contact](#contact)
-<!-- * [License](#license) -->
+* [License](#license)
 
 
 ## General Information
@@ -17,8 +17,8 @@
 - Data stored in DB in encoded format using GOB encoding
 - Persistent application using BadgerDB
 - Rest API implemented to accept JSON inputs
-- Month 1- Final Project during SDE Internship at Sarva.ai
-<!-- You don't have to answer all the questions - just the ones relevant to your project. -->
+- Week(1-4) Final Project during SDE Internship at Sarva Labs
+
 
 
 ## Technologies Used
@@ -28,22 +28,36 @@
 
 
 ## Features
-List the ready features here:
-- Awesome feature 1
-- Awesome feature 2
-- Awesome feature 3
-
-
-
-
+Ready to use features:
+- Add Book
+- Add User
+- Borrow book
+- Return book
+- Each user can borrow a maximum of 5 books
+- Audiobook and eBook are only available in digital format
+- Hardback and Paperback are only available in physical format
+- Encyclopedia, Comic and Magazine are available in both digital and physical format
 ## Usage
 Application Features:
 - File can be downloaded and run using go by running the main package.
 - Application will enter API mode on pressing 3 from main menu.
+- API endpoints are available on port:10000
 - Sample input provided in input.txt file to enter 7 books into the system
 
 ### REST API JSON data formats:
-#### ``1.Book``
+#### ``1.BookType Enum``
+Book type in following fields must be entered using the associated int value:
+```
+0. eBook
+1. AudioBook
+2. HardBack
+3. PaperBack
+4. Encyclopedia
+5. Magazine
+6. Comic
+ 
+```
+#### ``2.Book``
 The object requires booktype, name, author and capacity in respective fields.
 ```
 {
@@ -54,7 +68,7 @@ The object requires booktype, name, author and capacity in respective fields.
     "borrowed":0
 }
 ```
-#### ``2.Member``
+#### ``3.Member``
 The object requires name and age in respective fields.
 ```
 {
@@ -63,7 +77,7 @@ The object requires name and age in respective fields.
     "books":[]
 }
 ```
-#### ``3.Borrow/Return``
+#### ``4.Borrow/Return``
 The object requires name, type(booktype) and bookname in respective fields.
 ```
 {
@@ -127,14 +141,14 @@ This functionality is available at the */return* endpoint of the application URL
 The application returns any error or problem at server side while also returning the received json object to verify input.
 ## Room for Improvement
 Room for improvement:
-- Errors from caused by API endpoints returned to client
+- Errors caused by API endpoints to be returned to client
 - Improvement in efficiency using concurrent methods
 - Improved read-write operations to reduce redundant operations when using API end points
 
 
 ## Acknowledgements
 
-- This reademe file was based on [this template](https://github.com/ritaly/README-cheatsheet/blob/master/README.md)
+- This readme file was based on [this template](https://github.com/ritaly/README-cheatsheet/blob/master/README.md)
 - The REST API with MUX implementation was inspired by [this tutorial](https://semaphoreci.com/community/tutorials/building-and-testing-a-rest-api-in-go-with-gorilla-mux-and-postgresql).
 
 
